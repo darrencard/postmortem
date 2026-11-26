@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import csv
 import io
 import json
 import re
@@ -16,7 +17,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FIX = ROOT / "evals" / "fixtures" / "acme-invoice-outage"
+FIX = ROOT / "skills" / "postmortem" / "examples" / "acme-invoice-outage"
 sys.path.insert(0, str(ROOT / "skills" / "postmortem" / "scripts"))
 
 import check  # noqa: E402
@@ -232,7 +233,16 @@ class Checks(unittest.TestCase):
     def test_warnings_do_not_block(self) -> None:
         d = draft()
         d["what_happened"] += " The root cause was a missing secret path."
-        d["action_items"].append({"id": "A4", "action": "Look into staging drift.", "owner": "Kit Amara", "due": "2026-12-20", "addresses": ["CF1"]})
+        d["action_items"].append(
+            {
+                "id": "A4",
+                "action": "Look into staging drift.",
+                "owner": "Kit Amara",
+                "due": "2026-12-20",
+                "addresses": ["CF1"],
+                "done_when": "A written drift report exists.",
+            }
+        )
         found = check.check(self.t, d)
         self.assertEqual(rules(found), set())
         self.assertEqual({r for lvl, r, _ in found if lvl == "warning"}, {"single-root-cause", "vague-action"})
@@ -286,7 +296,7 @@ class Render(unittest.TestCase):
     def test_injection_in_source_changes_nothing(self) -> None:
         self.go()
         md = Path(self.run, "postmortem.md").read_text()
-        owners = [line.split(" | ")[3] for line in md.splitlines() if re.match(r"^\| A\d+ \|", line)]
+        owners = [line.split(" | ")[4] for line in md.splitlines() if re.match(r"^\| A\d+ \|", line)]
         self.assertEqual(owners, ["Kit Amara", "Robin Vale", "Noor Basi"])
 
     def test_escape(self) -> None:
@@ -316,6 +326,87 @@ class Fixture(unittest.TestCase):
         snapshot = copy.deepcopy(d)
         check.check(t, d)
         self.assertEqual(d, snapshot)
+
+
+class RoundOne(unittest.TestCase):
+    """Checks added after the first committee review."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        _, cls.t, _ = run_timeline(ALL)
+
+    def test_action_needs_done_when(self) -> None:
+        d = draft()
+        d["action_items"][0]["done_when"] = " "
+        self.assertIn("action-no-done-when", rules(check.check(self.t, d)))
+
+    def test_aggregate_claims_refused(self) -> None:
+        for text in ("Our MTTR was 2 h 20 min.", "Mean time to detect was 37 min.", "On average we detect in 37 min."):
+            d = draft()
+            d["summary"] = text
+            self.assertIn("aggregate-claim", rules(check.check(self.t, d)), text)
+
+    def test_far_due_and_too_many_actions_warn(self) -> None:
+        d = draft()
+        d["action_items"][0]["due"] = "2027-06-01"
+        extra = {"action": "Write the runbook entry.", "owner": "Kit Amara", "due": "2026-12-01", "addresses": ["CF1"], "done_when": "The entry is published."}
+        d["action_items"] += [{**extra, "id": f"X{n}"} for n in range(6)]
+        found = check.check(self.t, d)
+        self.assertEqual(rules(found), set())
+        warns = {r for lvl, r, _ in found if lvl == "warning"}
+        self.assertTrue({"due-far-out", "too-many-actions"} <= warns)
+
+    def test_changes_before_impact_listed_not_blamed(self) -> None:
+        changes = self.t["changes_before_impact"]
+        self.assertEqual(len(changes), 1)
+        self.assertTrue(changes[0]["text"].startswith("Deployed invoice-service v4.18.0"))
+
+    def test_wide_sentry_window_flagged(self) -> None:
+        code, t, _ = run_timeline([*ALL[: ALL.index("--sentry-issue")], "--impact", str(FIX / "impact.csv")])
+        self.assertEqual(code, 0)
+        flagged = [q for q in t["open_questions"] if "wider than the incident" in q]
+        self.assertTrue(any("QUOTE-SERVICE-2C" in q for q in flagged))
+        self.assertFalse(any("INVOICE-SERVICE-7Q" in q for q in flagged))
+
+    def test_facts_only_needs_no_draft(self) -> None:
+        tmp = tempfile.mkdtemp()
+        with contextlib.redirect_stdout(io.StringIO()):
+            timeline.main(["--run", tmp, *ALL])
+            self.assertEqual(render.main(["--run", tmp, "--facts-only"]), 0)
+        md = Path(tmp, "facts.md").read_text()
+        self.assertIn("**Facts only.**", md)
+        self.assertIn("| Time to detect | 37 min |", md)
+        self.assertNotIn("## Action items", md)
+        self.assertFalse(Path(tmp, "postmortem.md").exists())
+
+    def test_missing_review_date_warns(self) -> None:
+        d = draft()
+        del d["review_on"]
+        found = check.check(self.t, d)
+        self.assertEqual(rules(found), set())
+        self.assertIn("no-follow-up", {r for lvl, r, _ in found if lvl == "warning"})
+
+    def test_action_csv_matches_draft(self) -> None:
+        rows = list(csv.DictReader(io.StringIO(render.actions_csv(draft()))))
+        self.assertEqual([r["owner"] for r in rows], ["Kit Amara", "Robin Vale", "Noor Basi"])
+        self.assertTrue(all(r["done_when"] and r["due"] for r in rows))
+
+    def test_demo_runs_end_to_end(self) -> None:
+        import run as runner
+
+        tmp = tempfile.mkdtemp()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(runner.main(["--demo", "--run", tmp]), 0)
+        for name in ("timeline.json", "facts.md", "postmortem.md", "action_items.csv"):
+            self.assertTrue(Path(tmp, name).exists(), name)
+
+    def test_shipped_example_is_current(self) -> None:
+        import run as runner
+
+        tmp = tempfile.mkdtemp()
+        with contextlib.redirect_stdout(io.StringIO()):
+            runner.main(["--demo", "--run", tmp])
+        self.assertEqual(Path(tmp, "postmortem.md").read_text(), (FIX.parent / "acme-postmortem.md").read_text())
 
 
 if __name__ == "__main__":

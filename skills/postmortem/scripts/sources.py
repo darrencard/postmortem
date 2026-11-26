@@ -291,7 +291,16 @@ def sentry(files: list[str], issue_ids: list[str] | None = None) -> Source:
                         n = int(str(value))
                     except ValueError:
                         continue
-                    src.impact.append({"name": f"{ident} {name}", "value": n, "unit": unit, "source": f"Sentry {ident} {key} (lifetime of the issue)"})
+                    src.impact.append(
+                        {
+                            "name": f"{ident} {name}",
+                            "value": n,
+                            "unit": unit,
+                            "source": f"Sentry {ident} {key} (lifetime of the issue)",
+                            "first_seen": first.isoformat(),
+                            "last_seen": last.isoformat() if last else "",
+                        }
+                    )
     return src
 
 

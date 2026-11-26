@@ -8,6 +8,8 @@ Reads run/timeline.json (from timeline.py) and run/draft.json (the written parts
 as RULE: message and exits 1 if any is an error.
 
 Errors (block the render):
+  action-no-done-when    an action item does not say how anyone will know it is done
+  aggregate-claim        a mean, average or trend ("MTTR", "mean time to"): one incident has no mean
   missing-field          title, author, summary or what_happened is empty, or there is no factor or action
   action-no-owner        an action item has no owner, or a placeholder (TBD, team, everyone, on-call)
   action-many-owners     an action item names more than one owner, or a list
@@ -20,6 +22,9 @@ Warnings (printed, do not block):
   single-root-cause      "the root cause": a postmortem lists contributing factors, not one cause
   factor-no-action       a contributing factor no action item addresses
   vague-action           an action that cannot be checked as done ("be more careful", "look into")
+  due-far-out            an action due more than 90 days after the incident
+  no-follow-up           no review_on date: when the team checks the action items were done
+  too-many-actions       more than 8 action items: few owned actions get done, many get lost
 
 Standard library only. Runs on Python 3.11 or later. Makes no network calls.
 """
@@ -81,6 +86,9 @@ BLAME = [
     r"\bbe more careful\b",
     r"\bpay more attention\b",
 ]
+AGGREGATE = [r"\bMTT[ADMR]\b", r"\bmean time\b", r"\baverage time\b", r"\bon average\b", r"\bmedian time\b"]
+FAR_OUT_DAYS = 90
+MAX_ACTIONS = 8
 VAGUE = [r"\bbe more careful\b", r"\blook into\b", r"\btry to\b", r"\bpay more attention\b", r"\bremember to\b", r"\bconsider\b"]
 NUMBER = re.compile(r"(?<![\w.])(\d[\d,]*(?:\.\d+)?)(\s*(?:%|percent|minutes?|mins?|hours?|hrs?|h\b|seconds?|secs?|s\b|days?))?(?!\w)", re.IGNORECASE)
 DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
@@ -134,6 +142,7 @@ def prose_fields(draft: dict) -> list[tuple[str, str]]:
             out.append((f"{k}[{i}]", str(t or "")))
     for i, a in enumerate(draft.get("action_items") or []):
         out.append((f"action_items[{i}]", str(a.get("action") or "")))
+        out.append((f"action_items[{i}].done_when", str(a.get("done_when") or "")))
     return out
 
 
@@ -192,6 +201,10 @@ def check(timeline: dict, draft: dict) -> list[tuple[str, str, str]]:
         else:
             if first and due_day < first:
                 err("action-bad-due", f"action item {aid} is due {due}, before the incident ({first}).")
+            elif first and (due_day - first).days > FAR_OUT_DAYS:
+                warn("due-far-out", f"action item {aid} is due {due}, more than {FAR_OUT_DAYS} days after the incident. Split it or bring it in.")
+        if not str(a.get("done_when") or "").strip():
+            err("action-no-done-when", f"action item {aid} does not say how anyone will know it is done. Fill done_when.")
         targets = a.get("addresses") or []
         if not isinstance(targets, list) or not targets:
             err("action-addresses-none", f"action item {aid} addresses no contributing factor.")
@@ -203,6 +216,13 @@ def check(timeline: dict, draft: dict) -> list[tuple[str, str, str]]:
         text = str(a.get("action") or "")
         if any(re.search(p, text, re.IGNORECASE) for p in VAGUE):
             warn("vague-action", f'action item {aid} ("{text[:60]}") cannot be checked as done. Say what will exist when it is.')
+    review = str(draft.get("review_on") or "")
+    try:
+        datetime.date.fromisoformat(review)
+    except ValueError:
+        warn("no-follow-up", "review_on is not a YYYY-MM-DD date. Set the day the team checks the action items were done.")
+    if len(actions) > MAX_ACTIONS:
+        warn("too-many-actions", f"{len(actions)} action items. Keep the {MAX_ACTIONS} that matter most; list the rest as ideas.")
     for fid in sorted(factor_ids - addressed):
         warn("factor-no-action", f"contributing factor {fid} has no action item.")
 
@@ -213,6 +233,10 @@ def check(timeline: dict, draft: dict) -> list[tuple[str, str, str]]:
             m = re.search(p, text, re.IGNORECASE)
             if m:
                 err("blame-language", f'{where}: "{m.group(0)}". Describe what the system and the process allowed, not who erred.')
+        for p in AGGREGATE:
+            m = re.search(p, text, re.IGNORECASE)
+            if m:
+                err("aggregate-claim", f'{where}: "{m.group(0)}". One incident has durations, not a mean. Use its own times.')
         if re.search(r"\bthe root cause\b", text, re.IGNORECASE):
             warn("single-root-cause", f"{where}: names one root cause. List the contributing factors instead.")
         scrubbed = re.sub(r"\bev-\d+\b", " ", text)

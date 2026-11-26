@@ -30,6 +30,12 @@ Durations, all from impact start except where named:
   time_to_resolve      impact_started -> resolved
   detect_to_mitigate   detected -> mitigated
 
+Changes: every deploy in the 24 hours before impact started is listed, with its event id. Listing a change
+never claims it caused the incident; a contributing factor that says so must cite the evidence.
+
+Sentry counts cover an issue's whole life. If an issue was seen more than an hour outside the incident,
+its counts are flagged as an open question so they are not cited as the incident's impact.
+
 Sources that disagree on a moment by more than --disagree-minutes are listed as open questions.
 Moments out of order (resolved before detected, say) are refused: the sources need fixing first.
 
@@ -72,15 +78,19 @@ PRECEDENCE = {
 }
 ORDER = [("impact_started", "detected"), ("detected", "resolved"), ("impact_started", "mitigated"), ("mitigated", "resolved"), ("detected", "acknowledged")]
 
+# Deploys this long before impact started are listed as changes. Listing a change is never a claim it caused the incident.
+CHANGE_WINDOW_HOURS = 24
+
 DRAFT = {
     "title": "",
     "author": "",
+    "review_on": "YYYY-MM-DD",
     "summary": "",
     "what_happened": "",
     "contributing_factors": [{"id": "CF1", "factor": "", "evidence": ["ev-1"]}],
     "what_went_well": [""],
     "where_we_got_lucky": [""],
-    "action_items": [{"id": "A1", "action": "", "owner": "", "due": "YYYY-MM-DD", "addresses": ["CF1"], "kind": "prevent"}],
+    "action_items": [{"id": "A1", "action": "", "owner": "", "due": "YYYY-MM-DD", "done_when": "", "addresses": ["CF1"], "kind": "prevent"}],
 }
 
 
@@ -169,6 +179,28 @@ def build(srcs: list[sources.Source], overrides: dict[str, str], disagree_minute
         else:
             durations[key] = {"label": label, "display": "Unknown", "from": a, "to": b, "source": "a key moment is Unknown"}
 
+    impact = [i for s in srcs for i in s.impact]
+    start, end = moments.get("impact_started") or moments.get("detected"), moments.get("resolved")
+    if start and end:
+        lo, hi = sources.when(start["at"]) - datetime.timedelta(hours=1), sources.when(end["at"]) + datetime.timedelta(hours=1)
+        for i in impact:
+            first, last = sources.when(i.get("first_seen")), sources.when(i.get("last_seen"))
+            if (first and first < lo) or (last and last > hi):
+                questions.append(
+                    f"{i['name']}: the count covers {fmt_time(first) if first else 'an unknown start'} to {fmt_time(last) if last else 'an unknown end'}, "
+                    "wider than the incident. "
+                    "Do not cite it as the incident's impact; query the incident window instead."
+                )
+
+    changes = []
+    if start:
+        before = sources.when(start["at"])
+        changes = [
+            {"id": e["id"], "display": fmt_time(sources.when(e["at"])), "text": e["text"], "actor": e["actor"]}
+            for e in events
+            if e["kind"] == "deploy" and before - datetime.timedelta(hours=CHANGE_WINDOW_HOURS) <= sources.when(e["at"]) <= before
+        ]
+
     title = next((s.title for s in srcs if s.title), "")
     severity = next((s.severity for s in srcs if s.severity), "")
     return {
@@ -176,7 +208,8 @@ def build(srcs: list[sources.Source], overrides: dict[str, str], disagree_minute
         "severity": severity,
         "moments": moments,
         "durations": durations,
-        "impact": [i for s in srcs for i in s.impact],
+        "impact": impact,
+        "changes_before_impact": changes,
         "events": events,
         "open_questions": questions,
         "sources": [{"system": s.system, "files": [Path(f).name for f in s.files], "events": len(s.events), "skipped": s.skipped} for s in srcs],

@@ -5,7 +5,7 @@ Acme sells invoicing software to trades businesses (Series C, about 400 people, 
 assistant drafts quotes and chases unpaid invoices. On 2026-11-12 a release of the invoice service read
 the mail queue's credentials from a path production did not have, so invoice emails stopped sending.
 
-Usage: python3 evals/make_fixture.py   (rewrites evals/fixtures/acme-invoice-outage/)
+Usage: python3 evals/make_fixture.py   (rewrites skills/postmortem/examples/acme-invoice-outage/)
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import datetime
 import json
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "fixtures" / "acme-invoice-outage"
+OUT = Path(__file__).resolve().parent.parent / "skills" / "postmortem" / "examples" / "acme-invoice-outage"
 UTC = datetime.UTC
 
 
@@ -195,6 +195,7 @@ def main() -> None:
         {
             "title": "Invoice emails not sending after the queue client release",
             "author": "Kit Amara",
+            "review_on": "2026-12-15",
             "summary": (
                 "For 1 h 10 min, Acme did not send invoice emails. Release v4.18.0 of invoice-service read the mail queue's "
                 "credentials from a path production did not have. 4,860 invoices went out late. Rolling back to v4.17.3 mitigated it."
@@ -228,6 +229,7 @@ def main() -> None:
                     "action": "Add a deploy check that fails when a secret path the service reads is missing in the target environment.",
                     "owner": "Kit Amara",
                     "due": "2026-12-05",
+                    "done_when": "A deploy to staging with a missing secret path fails the pipeline, shown in a test run.",
                     "addresses": ["CF1"],
                     "kind": "prevent",
                 },
@@ -236,6 +238,7 @@ def main() -> None:
                     "action": "Page on-call when invoice send errors appear, as well as on a low success rate.",
                     "owner": "Robin Vale",
                     "due": "2026-11-28",
+                    "done_when": "A test error in invoice sending pages on-call, shown in a game-day drill.",
                     "addresses": ["CF2"],
                     "kind": "detect",
                 },
@@ -244,6 +247,7 @@ def main() -> None:
                     "action": "Make the assistant skip any chase whose invoice has no delivery receipt.",
                     "owner": "Noor Basi",
                     "due": "2026-12-12",
+                    "done_when": "A chase for an undelivered test invoice is skipped and logged.",
                     "addresses": ["CF3"],
                     "kind": "mitigate",
                 },
