@@ -1,0 +1,33 @@
+{
+  "log_entries": [
+    {
+      "type": "trigger_log_entry",
+      "created_at": "2026-11-12T14:19:00Z",
+      "summary": "Triggered through the API",
+      "agent": {
+        "summary": "Invoice send monitor"
+      }
+    },
+    {
+      "type": "notify_log_entry",
+      "created_at": "2026-11-12T14:19:00Z",
+      "summary": "Notified on-call by push"
+    },
+    {
+      "type": "acknowledge_log_entry",
+      "created_at": "2026-11-12T14:21:00Z",
+      "summary": "Acknowledged",
+      "agent": {
+        "summary": "Robin Vale"
+      }
+    },
+    {
+      "type": "resolve_log_entry",
+      "created_at": "2026-11-12T16:10:00Z",
+      "summary": "Resolved",
+      "agent": {
+        "summary": "Robin Vale"
+      }
+    }
+  ]
+}

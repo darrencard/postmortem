@@ -1,0 +1,6 @@
+{
+  "name": "postmortem",
+  "version": "0.1.0",
+  "description": "Write a blameless incident postmortem from PagerDuty or incident.io, Slack, the deploy log and Sentry. Code builds the timeline and computes time to detect, mitigate and resolve; every action item has one owner and a due date.",
+  "author": { "name": "Dacard" }
+}

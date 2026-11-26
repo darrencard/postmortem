@@ -1,0 +1,3 @@
+name,value,unit,source
+Invoices not sent on time,4860,invoices,"Warehouse query: invoices with send_status failed, 13:42 to 14:52 UTC (illustrative)"
+AI assistant chase reminders held,2140,reminders,"Assistant job log: chases paused, 14:44 to 16:01 UTC (illustrative)"

@@ -1,0 +1,28 @@
+{
+  "incident_updates": [
+    {
+      "created_at": "2026-11-12T14:40:00Z",
+      "new_incident_status": {
+        "name": "Fixing"
+      },
+      "message": "Rolling back invoice-service to v4.17.3.",
+      "updater": {
+        "user": {
+          "name": "Robin Vale"
+        }
+      }
+    },
+    {
+      "created_at": "2026-11-12T15:12:00Z",
+      "new_incident_status": {
+        "name": "Monitoring"
+      },
+      "message": "Sends recovered. Backlog draining.",
+      "updater": {
+        "user": {
+          "name": "Robin Vale"
+        }
+      }
+    }
+  ]
+}

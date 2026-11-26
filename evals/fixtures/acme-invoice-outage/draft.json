@@ -1,0 +1,70 @@
+{
+  "title": "Invoice emails not sending after the queue client release",
+  "author": "Kit Amara",
+  "summary": "For 1 h 10 min, Acme did not send invoice emails. Release v4.18.0 of invoice-service read the mail queue's credentials from a path production did not have. 4,860 invoices went out late. Rolling back to v4.17.3 mitigated it.",
+  "what_happened": "At 13:40 UTC invoice-service v4.18.0 deployed. Errors began at 13:42. The send monitor paged on-call 37 min later, at 14:19. On-call rolled back at 14:49 and sends recovered by 14:52. The AI assistant's invoice chasing was paused at 14:44 so it would not chase invoices customers never received, and restarted once the backlog drained.",
+  "contributing_factors": [
+    {
+      "id": "CF1",
+      "factor": "The new queue client read credentials from a secret path set in staging but not in production, and nothing checked the path before deploy.",
+      "evidence": [
+        "ev-1",
+        "ev-9",
+        "ev-10"
+      ]
+    },
+    {
+      "id": "CF2",
+      "factor": "The send monitor pages only when the success rate falls below 95% over a long window, so it paged 37 min after errors began.",
+      "evidence": [
+        "ev-2",
+        "ev-4"
+      ]
+    },
+    {
+      "id": "CF3",
+      "factor": "The AI assistant chases unpaid invoices without checking that the invoice was delivered.",
+      "evidence": [
+        "ev-13"
+      ]
+    }
+  ],
+  "what_went_well": [
+    "The team paused chasing before customers were chased for invoices they never got."
+  ],
+  "where_we_got_lucky": [
+    "The outage began after most trades businesses had sent the day's invoices."
+  ],
+  "action_items": [
+    {
+      "id": "A1",
+      "action": "Add a deploy check that fails when a secret path the service reads is missing in the target environment.",
+      "owner": "Kit Amara",
+      "due": "2026-12-05",
+      "addresses": [
+        "CF1"
+      ],
+      "kind": "prevent"
+    },
+    {
+      "id": "A2",
+      "action": "Page on-call when invoice send errors appear, as well as on a low success rate.",
+      "owner": "Robin Vale",
+      "due": "2026-11-28",
+      "addresses": [
+        "CF2"
+      ],
+      "kind": "detect"
+    },
+    {
+      "id": "A3",
+      "action": "Make the assistant skip any chase whose invoice has no delivery receipt.",
+      "owner": "Noor Basi",
+      "due": "2026-12-12",
+      "addresses": [
+        "CF3"
+      ],
+      "kind": "mitigate"
+    }
+  ]
+}

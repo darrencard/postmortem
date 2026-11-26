@@ -1,0 +1,23 @@
+[
+  {
+    "id": "U01",
+    "name": "robin",
+    "profile": {
+      "real_name": "Robin Vale"
+    }
+  },
+  {
+    "id": "U02",
+    "name": "kit",
+    "profile": {
+      "real_name": "Kit Amara"
+    }
+  },
+  {
+    "id": "U03",
+    "name": "noor",
+    "profile": {
+      "real_name": "Noor Basi"
+    }
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "4410021",
+    "shortId": "INVOICE-SERVICE-7Q",
+    "title": "QueueAuthError: credentials rejected by mail queue",
+    "level": "error",
+    "firstSeen": "2026-11-12T13:42:00Z",
+    "lastSeen": "2026-11-12T14:50:00Z",
+    "count": "18422",
+    "userCount": 1312
+  },
+  {
+    "id": "4409876",
+    "shortId": "QUOTE-SERVICE-2C",
+    "title": "TimeoutError in quote draft",
+    "level": "error",
+    "firstSeen": "2026-11-02T09:00:00Z",
+    "lastSeen": "2026-11-12T15:00:00Z",
+    "count": "61",
+    "userCount": 9
+  }
+]

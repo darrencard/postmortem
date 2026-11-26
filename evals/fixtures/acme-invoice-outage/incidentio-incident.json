@@ -1,0 +1,45 @@
+{
+  "incident": {
+    "id": "01ACMEINC482",
+    "reference": "INC-482",
+    "name": "Invoice emails not sending",
+    "created_at": "2026-11-12T14:24:00Z",
+    "severity": {
+      "name": "Major"
+    },
+    "incident_timestamp_values": [
+      {
+        "incident_timestamp": {
+          "name": "Impact started"
+        },
+        "value": {
+          "value": "2026-11-12T13:42:00Z"
+        }
+      },
+      {
+        "incident_timestamp": {
+          "name": "Accepted"
+        },
+        "value": {
+          "value": "2026-11-12T14:26:00Z"
+        }
+      },
+      {
+        "incident_timestamp": {
+          "name": "Mitigated"
+        },
+        "value": {
+          "value": "2026-11-12T14:52:00Z"
+        }
+      },
+      {
+        "incident_timestamp": {
+          "name": "Resolved"
+        },
+        "value": {
+          "value": "2026-11-12T16:02:00Z"
+        }
+      }
+    ]
+  }
+}

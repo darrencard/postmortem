@@ -1,0 +1,12 @@
+{
+  "name": "dacard-postmortem",
+  "owner": { "name": "Dacard" },
+  "plugins": [
+    {
+      "name": "postmortem",
+      "displayName": "Postmortem",
+      "source": "./",
+      "description": "Blameless incident postmortems with times computed in code and one owner per action item."
+    }
+  ]
+}
