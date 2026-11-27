@@ -75,28 +75,28 @@ The written parts, as written:
 | Change | Evidence | Figure | Window | Source |
 |---|---|---|---|---|
 | c1 | incident:2141 | 72 minutes | 2026-10-30 14:05 UTC to 2026-10-30 15:17 UTC | PagerDuty (acme): PagerDuty incidents, created\_at to resolved\_at, services Quote drafting (pagerduty-incidents.json, retrieved 2026-11-26); restored\_at - started\_at |
-| c1 | record:cost/driver/over\_budget | $0.96 | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.3: model cost - model token share x budgeted cost; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15); quote-drafting.md |
-| c2 | record:cost/lines/tokens\_per\_task/prior | 8,400 tokens per task | 2026-10-18 to 2026-10-31 | cost-budget-check 0.3.3: tokens / tasks, 2026-10-18..2026-10-31; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
-| c2 | record:cost/lines/tokens\_per\_task/actual | 10,300 tokens per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.3: tokens / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
+| c1 | record:cost/driver/over\_budget | $0.96 | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.4: model cost - model token share x budgeted cost; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15); quote-drafting.md |
+| c2 | record:cost/lines/tokens\_per\_task/prior | 8,400 tokens per task | 2026-10-18 to 2026-10-31 | cost-budget-check 0.3.4: tokens / tasks, 2026-10-18..2026-10-31; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
+| c2 | record:cost/lines/tokens\_per\_task/actual | 10,300 tokens per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.4: tokens / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
 | c2 | record:cost/lines/tokens\_per\_task/budget | 9,000 tokens per task | 2026-11-01 to 2026-11-14 | landing brief quote-drafting.md |
 | c3 | record:evals/figures/pass\_rate@v1.4 | 80% | 2026-11-15 | quote-drafting.csv (sha256 ee43a12a2395) |
-| c3 | record:cost/lines/cost\_per\_task/actual | $0.03376 per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.3: priced cost / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
+| c3 | record:cost/lines/cost\_per\_task/actual | $0.03376 per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.4: priced cost / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
 | c4 | incident:2203 | 22 minutes | 2026-11-18 09:40 UTC to 2026-11-18 10:02 UTC | PagerDuty (acme): PagerDuty incidents, created\_at to resolved\_at, services Quote drafting (pagerduty-incidents.json, retrieved 2026-11-26); restored\_at - started\_at |
 
 | Step | Word | Figure | Window | Source |
 |---|---|---|---|---|
 | 01 Decide |  | 14 points of 14 | 2026-07-27 | briefs/quote-drafting.md |
-| 02 Spec | hold | 2 findings | 2026-08-03 | spec-auditor 0.3.3, audit of examples/acme/specs/quote-drafting.md |
-| 03 Build, cost | over budget | 10,300 tokens per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.3: tokens / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
+| 02 Spec | hold | 2 findings | 2026-08-03 | spec-auditor 0.3.4, audit of examples/acme/specs/quote-drafting.md |
+| 03 Build, cost | over budget | 10,300 tokens per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.4: tokens / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
 | 03 Build, cost | over budget | 9,000 tokens per task | 2026-11-01 to 2026-11-14 | landing brief quote-drafting.md |
-| 03 Build, cost | over budget | $0.03376 per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.3: priced cost / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
+| 03 Build, cost | over budget | $0.03376 per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.4: priced cost / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
 | 03 Build, cost | over budget | $0.027 per task | 2026-11-01 to 2026-11-14 | landing brief quote-drafting.md (tokens per task x price per token) |
 | 03 Build, evals | not confirmed: too close to call | 80% | 2026-11-15 | quote-drafting.csv (sha256 ee43a12a2395) |
 | 04 Learn, did-it-land |  | 43% | 2026-09-07 to 2026-11-23 | Illustrative product analytics export, quote\_drafts\_weekly.csv |
 | 04 Learn, did-it-land |  | 41% | 2026-09-07 to 2026-11-09 | Illustrative product analytics export, quote\_drafts\_weekly.csv |
 | 04 Learn, did-it-land |  | 40% | to 2026-11-15 | landing brief: quote-drafting.md |
 
-Status: printed from `landed.status` as did-it-land 0.3.4 wrote it, never computed here. Review kind: learning review. Window 2026-09-07 to 2026-11-26. Author: Lead, Quoting squad.
+Status: printed from `landed.status` as did-it-land 0.3.5 wrote it, never computed here. Review kind: learning review. Window 2026-09-07 to 2026-11-26. Author: Lead, Quoting squad.
 
 Check: what changed: 4 listed, each with its evidence. Who owns each fix: 4 of 4 with one owner and a due date.
 
