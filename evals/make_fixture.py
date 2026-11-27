@@ -61,8 +61,8 @@ def main() -> None:
             "log_entries": [
                 {"type": "trigger_log_entry", "created_at": iso("14:19"), "summary": "Triggered through the API", "agent": {"summary": "Invoice send monitor"}},
                 {"type": "notify_log_entry", "created_at": iso("14:19"), "summary": "Notified on-call by push"},
-                {"type": "acknowledge_log_entry", "created_at": iso("14:21"), "summary": "Acknowledged", "agent": {"summary": "Robin Vale"}},
-                {"type": "resolve_log_entry", "created_at": iso("16:10"), "summary": "Resolved", "agent": {"summary": "Robin Vale"}},
+                {"type": "acknowledge_log_entry", "created_at": iso("14:21"), "summary": "Acknowledged", "agent": {"summary": "Platform on-call lead"}},
+                {"type": "resolve_log_entry", "created_at": iso("16:10"), "summary": "Resolved", "agent": {"summary": "Platform on-call lead"}},
             ]
         },
     )
@@ -96,13 +96,13 @@ def main() -> None:
                     "created_at": iso("14:40"),
                     "new_incident_status": {"name": "Fixing"},
                     "message": "Rolling back invoice-service to v4.17.3.",
-                    "updater": {"user": {"name": "Robin Vale"}},
+                    "updater": {"user": {"name": "Platform on-call lead"}},
                 },
                 {
                     "created_at": iso("15:12"),
                     "new_incident_status": {"name": "Monitoring"},
                     "message": "Sends recovered. Backlog draining.",
-                    "updater": {"user": {"name": "Robin Vale"}},
+                    "updater": {"user": {"name": "Platform on-call lead"}},
                 },
             ]
         },
@@ -111,9 +111,9 @@ def main() -> None:
     dump(
         "slack/users.json",
         [
-            {"id": "U01", "name": "robin", "profile": {"real_name": "Robin Vale"}},
-            {"id": "U02", "name": "kit", "profile": {"real_name": "Kit Amara"}},
-            {"id": "U03", "name": "noor", "profile": {"real_name": "Noor Basi"}},
+            {"id": "U01", "name": "robin", "profile": {"real_name": "Platform on-call lead"}},
+            {"id": "U02", "name": "kit", "profile": {"real_name": "Invoicing squad lead"}},
+            {"id": "U03", "name": "noor", "profile": {"real_name": "AI assistant product lead"}},
         ],
     )
     dump(
@@ -156,7 +156,7 @@ def main() -> None:
         w.writerow(["at", "service", "version", "kind", "actor", "description"])
         w.writerow([iso("11:05"), "quote-service", "v2.9.1", "deploy", "ci", "Quote draft prompt update"])
         w.writerow([iso("13:40"), "invoice-service", "v4.18.0", "deploy", "ci", "Move invoice email sending to the new queue client"])
-        w.writerow([iso("14:49"), "invoice-service", "v4.17.3", "rollback", "Robin Vale", "Roll back queue client change"])
+        w.writerow([iso("14:49"), "invoice-service", "v4.17.3", "rollback", "Platform on-call lead", "Roll back queue client change"])
 
     dump(
         "sentry-issues.json",
@@ -194,7 +194,7 @@ def main() -> None:
         "draft.json",
         {
             "title": "Invoice emails not sending after the queue client release",
-            "author": "Kit Amara",
+            "author": "Invoicing squad lead",
             "review_on": "2026-12-15",
             "summary": (
                 "For 1 h 10 min, Acme did not send invoice emails. Release v4.18.0 of invoice-service read the mail queue's "
@@ -224,7 +224,7 @@ def main() -> None:
                 {
                     "id": "A1",
                     "action": "Add a deploy check that fails when a secret path the service reads is missing in the target environment.",
-                    "owner": "Kit Amara",
+                    "owner": "Invoicing squad lead",
                     "due": "2026-12-05",
                     "done_when": "A deploy to staging with a missing secret path fails the pipeline, shown in a test run.",
                     "addresses": ["CF1"],
@@ -233,7 +233,7 @@ def main() -> None:
                 {
                     "id": "A2",
                     "action": "Page on-call when invoice send errors appear, as well as on a low success rate.",
-                    "owner": "Robin Vale",
+                    "owner": "Platform on-call lead",
                     "due": "2026-11-28",
                     "done_when": "A test error in invoice sending pages on-call, shown in a game-day drill.",
                     "addresses": ["CF2"],
@@ -242,7 +242,7 @@ def main() -> None:
                 {
                     "id": "A3",
                     "action": "Make the assistant skip any chase whose invoice has no delivery receipt.",
-                    "owner": "Noor Basi",
+                    "owner": "AI assistant product lead",
                     "due": "2026-12-12",
                     "done_when": "A chase for an undelivered test invoice is skipped and logged.",
                     "addresses": ["CF3"],

@@ -3,21 +3,21 @@
     "id": "U01",
     "name": "robin",
     "profile": {
-      "real_name": "Robin Vale"
+      "real_name": "Platform on-call lead"
     }
   },
   {
     "id": "U02",
     "name": "kit",
     "profile": {
-      "real_name": "Kit Amara"
+      "real_name": "Invoicing squad lead"
     }
   },
   {
     "id": "U03",
     "name": "noor",
     "profile": {
-      "real_name": "Noor Basi"
+      "real_name": "AI assistant product lead"
     }
   }
 ]

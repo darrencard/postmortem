@@ -1,4 +1,4 @@
 at,service,version,kind,actor,description
 2026-11-12T11:05:00Z,quote-service,v2.9.1,deploy,ci,Quote draft prompt update
 2026-11-12T13:40:00Z,invoice-service,v4.18.0,deploy,ci,Move invoice email sending to the new queue client
-2026-11-12T14:49:00Z,invoice-service,v4.17.3,rollback,Robin Vale,Roll back queue client change
+2026-11-12T14:49:00Z,invoice-service,v4.17.3,rollback,Platform on-call lead,Roll back queue client change

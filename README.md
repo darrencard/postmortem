@@ -56,7 +56,7 @@ The bet's status is did-it-land's. The page prints `landed.status` and never com
   "what_changed": [{"id": "c2", "change": "Tokens per task rose past the brief's budget ...",
                     "evidence": ["record:cost/lines/tokens_per_task/actual"], "cited": {"...": "the figure, copied unchanged"}}],
   "fixes": [{"id": "f1", "fix": "Send only long drafts to the larger model ...", "done_when": "...",
-             "owner": "Priya Shah", "due": "2026-12-10", "addresses": ["c1", "c2"], "kind": "prevent"}],
+             "owner": "Quoting squad lead", "due": "2026-12-10", "addresses": ["c1", "c2"], "kind": "prevent"}],
   "check": "what changed: 4 listed, each with its evidence. Who owns each fix: 4 of 4 with one owner and a due date."
 }
 ```
@@ -87,3 +87,5 @@ Not yet run on a real team's data.
 Run the tests: `python3 -m unittest discover -s evals`.
 
 MIT licence. Made by [Dacard](https://www.dacard.ai). PagerDuty, incident.io, Slack and Sentry are trademarks of their owners; this skill is not affiliated with or endorsed by them.
+
+Claude and Claude Code are trademarks of Anthropic, PBC. These skills are independent and not affiliated with or endorsed by Anthropic.

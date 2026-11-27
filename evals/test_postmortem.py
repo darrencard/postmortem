@@ -106,7 +106,7 @@ class Timeline(unittest.TestCase):
 
     def test_slack_names_resolved(self) -> None:
         actors = {e["actor"] for e in self.t["events"] if e["source"] == "Slack"}
-        self.assertEqual(actors, {"Robin Vale", "Kit Amara", "Noor Basi"})
+        self.assertEqual(actors, {"Platform on-call lead", "Invoicing squad lead", "AI assistant product lead"})
 
 
 class Moments(unittest.TestCase):
@@ -274,7 +274,7 @@ class Render(unittest.TestCase):
         self.assertIn("**Illustrative.**", md)
         self.assertIn("| Time to detect | 37 min |", md)
         self.assertIn("| A1 |", md)
-        self.assertIn("Kit Amara", md)
+        self.assertIn("Invoicing squad lead", md)
         self.assertIn("Open questions on the data", md)
 
     def test_ownerless_action_blocks_render(self) -> None:
@@ -297,7 +297,7 @@ class Render(unittest.TestCase):
         self.go()
         md = Path(self.run, "postmortem.md").read_text()
         owners = [line.split(" | ")[4] for line in md.splitlines() if re.match(r"^\| A\d+ \|", line)]
-        self.assertEqual(owners, ["Kit Amara", "Robin Vale", "Noor Basi"])
+        self.assertEqual(owners, ["Invoicing squad lead", "Platform on-call lead", "AI assistant product lead"])
 
     def test_escape(self) -> None:
         self.assertEqual(render.esc("a|b <script>"), "a\\|b &lt;script&gt;")
@@ -388,7 +388,7 @@ class RoundOne(unittest.TestCase):
 
     def test_action_csv_matches_draft(self) -> None:
         rows = list(csv.DictReader(io.StringIO(render.actions_csv(draft()))))
-        self.assertEqual([r["owner"] for r in rows], ["Kit Amara", "Robin Vale", "Noor Basi"])
+        self.assertEqual([r["owner"] for r in rows], ["Invoicing squad lead", "Platform on-call lead", "AI assistant product lead"])
         self.assertTrue(all(r["done_when"] and r["due"] for r in rows))
 
     def test_demo_runs_end_to_end(self) -> None:
