@@ -8,6 +8,7 @@
 - The Illustrative tag is the family's blue, not the template's grey.
 - Design fix round 2: no text below 11px at any width (the page raises the vendored template's and svgkit's smaller sizes as it inlines them; the files on disk are unchanged); the header prints the plain name, Postmortem, and the code name moves to the engineers' fold; public copy drops record, bet, the bar, PRD, ARR and tokens; each incident is labelled by what happened (`incident_labels` in review.json: "Drafts timed out", "Price sync lagged"), its number in the fold. Incident labels are placed so they never cross another label, a stem or the review line; on a phone the review and fix review labels sit under the axis.
 - Tests: the picture draws only printed figures, green appears only beside the word landed, the aria-label states the answer, public copy uses the plain words, and the vendored svgkit matches its pin.
+- On phones up to 440px the picture's panel gives it its full 340px, so its 11px labels render at 11px at 390 and 375 wide.
 
 ## 0.3.0, 2026-11-26
 
