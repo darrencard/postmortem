@@ -1,5 +1,5 @@
 {
-  "author": "Quoting squad lead",
+  "author": "Lead, Quoting squad",
   "review_on": "2026-12-17",
   "summary": "Two incidents touched quote drafting after launch. To stop the first, long drafts were sent to a larger model, and that routing stayed in place. It is the main driver of the cost running over the brief's budget in early November. Prices stayed in fixed code throughout, as the brief's line says.",
   "what_changed": [
@@ -33,7 +33,7 @@
       "id": "f1",
       "fix": "Send only drafts over the standard model's context limit to vendor-a/xl, and route the rest back.",
       "done_when": "cost-budget-check reads tokens per task within budget for a full two-week window.",
-      "owner": "Quoting squad lead",
+      "owner": "Lead, Quoting squad",
       "due": "2026-12-10",
       "addresses": ["c1", "c2"],
       "kind": "prevent"
@@ -51,7 +51,7 @@
       "id": "f3",
       "fix": "Put the cost-budget-check result beside the eval-kit result on every quote drafting release candidate.",
       "done_when": "The next release candidate's checklist links both, and a build over budget is held for a decision.",
-      "owner": "Quoting squad tech lead",
+      "owner": "Tech lead, Quoting squad",
       "due": "2027-01-08",
       "addresses": ["c3"],
       "kind": "detect"

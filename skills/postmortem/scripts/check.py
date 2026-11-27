@@ -65,6 +65,19 @@ PLACEHOLDER_OWNERS = {
     "ops",
 }
 MANY_OWNERS = re.compile(r",|;|&|\+|/|\band\b|\bor\b", re.IGNORECASE)
+# One role scoped to one team, written "<role>, <team or squad>" ("Lead, Quoting squad"), as decision-record
+# writes a decider. Its one comma scopes the role; it does not join two owners.
+SCOPED_ROLE = re.compile(r"^[^,]+,\s*[^,]*\S\s+(?:squad|team)$", re.IGNORECASE)
+
+
+def many_owners(owner: str) -> bool:
+    """True when the owner text names more than one person ("Kit Amara and Robin Vale", "Kit/Robin")."""
+    owner = owner.strip()
+    if SCOPED_ROLE.match(owner):
+        owner = owner.replace(",", " ", 1)
+    return bool(MANY_OWNERS.search(owner))
+
+
 BLAME = [
     r"human error",
     r"\bcareless",
@@ -191,7 +204,7 @@ def check(timeline: dict, draft: dict) -> list[tuple[str, str, str]]:
             err("action-many-owners", f"action item {aid} lists {len(owner)} owners. Name one person; others can help.")
         elif str(owner or "").strip().lower() in PLACEHOLDER_OWNERS:
             err("action-no-owner", f'action item {aid} has no owner ("{owner or ""}"). Name one person who will see it through.')
-        elif MANY_OWNERS.search(str(owner)):
+        elif many_owners(str(owner)):
             err("action-many-owners", f'action item {aid} names more than one owner ("{owner}"). Name one person.')
         due = str(a.get("due") or "")
         try:

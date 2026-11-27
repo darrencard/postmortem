@@ -262,7 +262,7 @@ def checks(review: dict[str, Any], record: dict[str, Any], incidents: list[dict[
             err("fix-many-owners", f"fix {fid} lists {len(owner)} owners. Name one person; others can help.")
         elif str(owner or "").strip().lower() in check.PLACEHOLDER_OWNERS:
             err("fix-no-owner", f'fix {fid} has no owner ("{owner or ""}"). Name one person who will see it through.')
-        elif check.MANY_OWNERS.search(str(owner)):
+        elif check.many_owners(str(owner)):
             err("fix-many-owners", f'fix {fid} names more than one owner ("{owner}"). Name one person.')
         due = str(f.get("due") or "")
         try:

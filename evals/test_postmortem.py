@@ -179,6 +179,16 @@ class Checks(unittest.TestCase):
             d["action_items"][0]["owner"] = owner
             self.assertIn("action-many-owners", self.errors(d), owner)
 
+    def test_role_scoped_to_one_team_is_one_owner(self) -> None:
+        for owner in ("Lead, Quoting squad", "Tech lead, Quoting squad", "Head of Product, Payments team"):
+            d = draft()
+            d["action_items"][0]["owner"] = owner
+            self.assertNotIn("action-many-owners", self.errors(d), owner)
+        for owner in ("Kit Amara, Robin Vale", "Lead, Quoting squad and Tech lead, Quoting squad", "Lead, Quoting squad, Payments squad"):
+            d = draft()
+            d["action_items"][0]["owner"] = owner
+            self.assertIn("action-many-owners", self.errors(d), owner)
+
     def test_name_containing_and_is_one_owner(self) -> None:
         d = draft()
         d["action_items"][0]["owner"] = "Sandra Anderson"
