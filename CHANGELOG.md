@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1, 2026-11-27
+
+- The HTML page follows the Landing Loop sample anatomy: the shared header (mark, DACARD, skill, date, version, blue Illustrative tag), the verdict as the heading ("Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date."), the project's status from did-it-land, the signature picture, one next step (the fix review) with the brief's decider in brass and its date, then what changed and who fixes it in two columns, and the incidents, what went well and the earlier steps in two more. Evidence with its sources, the written parts as written, the check line and the record key fold under "For your engineers".
+- The signature picture: one timeline from the window opening through each incident (with its time to fix) and the review to each fix's due date, each fix's owner in a brass chip and the fix review as a brass person mark. A 640 wide variant for desktop and a 340 wide one for phones; the aria-label states the answer. Drawn with svgkit, vendored byte-identical from landing-loop and pinned in `VENDORED.json` under `landing-loop`.
+- Public copy in plain words, on the page and in the Markdown twin, which `render_html.markdown` now writes: after-action review, project, target, landing brief (defined at first use), time to fix, AI usage per task, the large model, quality test. The record keeps the written parts as written.
+- The Illustrative tag is the family's blue, not the template's grey.
+- Tests: the picture draws only printed figures, green appears only beside the word landed, the aria-label states the answer, public copy uses the plain words, and the vendored svgkit matches its pin.
+
 ## 0.3.0, 2026-11-26
 
 - Step 04 of the Landing Loop. `scripts/review.py` reads a bet's landing brief, its incidents and its `landing/<bet>.json` record up to `landed` (portfolio, spec, cost, evals, landed), and writes only the `postmortem` key. Every other key is kept byte for byte.

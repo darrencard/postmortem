@@ -28,10 +28,12 @@ sys.path.insert(0, str(SKILL / "scripts"))
 sys.path.insert(0, str(ROOT / "examples" / "acme"))
 
 import loop  # noqa: E402
+import render_html  # noqa: E402
 import review  # noqa: E402
 import sample  # noqa: E402
+import svgkit  # noqa: E402
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
 
 def dumps(v: object) -> str:
@@ -227,7 +229,9 @@ class Sample(unittest.TestCase):
         page = (ACME / "postmortem.html").read_text(encoding="utf-8")
         self.assertNotRegex(page, r'(?:src|href)="https?://')
         self.assertNotIn("@import", page)
-        self.assertIn('class="ill">Illustrative', page)
+        self.assertIn('<span class="sk-ill">Illustrative</span>', page)
+        self.assertIn(":root{--ill:#74A5DA}", page, "the Illustrative tag is blue")
+        self.assertNotIn('class="ill"', page, "the template's grey tag")
         self.assertIn("Illustrative", (ACME / "postmortem.md").read_text(encoding="utf-8"))
 
 
@@ -347,6 +351,88 @@ class Blameless(unittest.TestCase, Setup):
         self.assertIn("'=HYPERLINK", (tmp / "f.csv").read_text(encoding="utf-8"))
 
 
+class Visual(unittest.TestCase):
+    """The page in the Landing Loop's one visual family: svgkit pinned, the picture honest, the words plain."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.page = (ACME / "postmortem.html").read_text(encoding="utf-8")
+        cls.md = (ACME / "postmortem.md").read_text(encoding="utf-8")
+        cls.key = json.loads((ACME / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+
+    def test_svgkit_matches_its_landing_loop_pin(self):
+        pin = json.loads((SKILL / "VENDORED.json").read_text(encoding="utf-8"))["landing-loop"]
+        self.assertEqual(pin["commit"], "5d01756d08ab3eb92b457c3286729791df6bcf5f")
+        self.assertEqual(set(pin["files"]), {"scripts/vendor/svgkit.py"})
+        for rel, info in pin["files"].items():
+            digest = hashlib.sha256((SKILL / rel).read_bytes()).hexdigest()
+            self.assertEqual(digest, info["sha256"], f"{rel} changed. Copy it again from landing-loop at the pinned commit and update VENDORED.json.")
+
+    def test_the_visual_draws_only_figures_the_page_prints(self):
+        visuals = svgkit.visuals_in(self.page)
+        self.assertEqual(len(visuals), 2, "the wide picture and the tall one")
+        self.assertEqual(svgkit.unprinted(self.page), [])
+        text = svgkit.page_text(self.page)
+        for svg in visuals:
+            drawn = svgkit.texts_in(svg)
+            for i in self.key["incidents"]:
+                self.assertIn(i["id"], drawn)
+                self.assertIn(f"{i['time_to_restore']['value']} MIN", drawn)
+                self.assertIn(loop.shown(i["time_to_restore"]).upper(), text)
+            for f in self.key["fixes"]:
+                self.assertIn(f["due"], drawn)
+                self.assertIn(f["owner"].upper(), drawn, "each fix's owner prints in its chip")
+            # One brass chip per fix and one brass person at the fix review: brass is a person's call.
+            self.assertEqual(svg.count('stroke="var(--brass)"'), len(self.key["fixes"]))
+            self.assertEqual(svg.count('fill="var(--brass)"'), 2, "the fix review's person mark: head and shoulders")
+
+    def test_green_and_red_only_beside_their_words(self):
+        body = self.page.split("</style>", 1)[1]
+        rest = re.sub(r'<span class="st (landed|stalled)" data-from="landed">\1</span>', "", body)
+        for word in ("landed", "stalled"):
+            self.assertNotIn(f"var(--{word})", rest)
+            self.assertNotIn(f"st {word}", rest)
+        self.assertEqual(body.count('<span class="st landed" data-from="landed">landed</span>'), 1)
+
+    def test_each_visual_states_its_answer(self):
+        labels = re.findall(r'<svg class="sk-(?:wide|tall)"[^>]* aria-label="([^"]+)"', self.page)
+        self.assertEqual(len(labels), 2)
+        for label in labels:
+            self.assertEqual(
+                label,
+                "Two incidents from 2026-09-07 to 2026-11-26: 2141 on 2026-10-30, fixed in 72 minutes; 2203 on 2026-11-18, fixed in 22 minutes. "
+                "4 fixes, each with one owner, due from 2026-12-10 to 2027-01-08. The fix review is on 2026-12-17.",
+            )
+
+    def test_public_copy_uses_plain_words(self):
+        public = svgkit.page_text(self.page.split("For your engineers", 1)[0]).lower()
+        md = self.md.split("## For your engineers", 1)[0].lower()
+        for text in (public, md):
+            for word in ("vendor-a/xl", "tokens per task", "eval run", "eval target", "time to restore", "postmortem:", " bet ", " bar ", ".json", "the prd", "inside noise"):
+                self.assertNotIn(word, text)
+            self.assertIn("the large model", text)
+            self.assertIn("after-action review", text)
+            self.assertIn("time to fix", text)
+        self.assertIn("<b>landing brief</b>, a one-page plan: what good looks like, by when, at what cost", self.page)
+        # The engineers' fold keeps the words as written, model id included.
+        self.assertIn("vendor-a/xl", self.page.split("For your engineers", 1)[1])
+
+    def test_the_page_follows_the_sample_anatomy(self):
+        body = self.page.split('<main class="solo">', 1)[1]
+        order = ['class="sk-hdr"', "<h1>", 'class="marks"', 'class="panel"', "What to do next", 'class="cols"', "For your engineers"]
+        at = [body.index(x) for x in order]
+        self.assertEqual(at, sorted(at))
+        self.assertIn("<h1>Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.</h1>", body)
+        self.assertEqual(body.count('<div class="next">'), 1, "one next step leads the page")
+        self.assertIn('<span class="o">Head of Product, Quoting squad</span><span class="d">2026-12-17</span>', body)
+        self.assertIn("<span>postmortem</span><span>As of 2026-11-26</span><span>v0.3.1</span>", body)
+        self.assertNotIn("Book a call", body, "a sample is the skill's own output: no call to action")
+        self.assertTrue(self.md.startswith("# Quote drafting had two incidents since 2026-09-07."))
+
+    def test_markdown_twin_is_written_by_the_page_module(self):
+        self.assertEqual(render_html.markdown(self.key), self.md)
+
+
 class Repo(unittest.TestCase):
     TEXT = [
         p
@@ -367,7 +453,7 @@ class Repo(unittest.TestCase):
         self.assertEqual(json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"], VERSION)
         self.assertIn(f'version: "{VERSION}"', (SKILL / "SKILL.md").read_text(encoding="utf-8"))
         self.assertEqual(review.VERSION, VERSION)
-        self.assertIn(f"## {VERSION}, 2026-11-26", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
+        self.assertIn(f"## {VERSION}, 2026-11-27", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
 
     def test_vendored_files_match_their_pins(self):
         pins = json.loads((SKILL / "VENDORED.json").read_text(encoding="utf-8"))

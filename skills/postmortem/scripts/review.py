@@ -63,7 +63,7 @@ import collect  # noqa: E402  (vendored unchanged, see VENDORED.json)
 import loop  # noqa: E402
 import render_html  # noqa: E402
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 TOOL = f"postmortem {VERSION}"
 REVIEW_KIND = {"landed": "learning review", "stalled": "stall review", "watch": "mid-course review", None: "incident review"}
 NEXT_SKILL = {"portfolio": "bet-portfolio-review", "spec": "spec-auditor", "cost": "cost-budget-check", "evals": "eval-kit", "landed": "did-it-land"}
@@ -401,82 +401,6 @@ def build(args: argparse.Namespace) -> tuple[Path, dict[str, Any], dict[str, Any
     return record_path, record, key, found
 
 
-def esc(text: Any) -> str:
-    s = " ".join(str(text or "").split())
-    for a, b in (("\\", "\\\\"), ("|", "\\|"), ("<", "&lt;"), (">", "&gt;"), ("`", "\\`"), ("[", "\\["), ("]", "\\]"), ("*", "\\*"), ("_", "\\_")):
-        s = s.replace(a, b)
-    return s
-
-
-def markdown(key: dict[str, Any]) -> str:
-    b = key["brief"]
-    out: list[str] = []
-    w = out.append
-    w(f"# Postmortem: {esc(b['title'])}")
-    w("")
-    if key["illustrative"]:
-        w("> **Illustrative.** Acme is an invented company. Every figure comes from a synthetic fixture.")
-        w("")
-    st = key["landed_status"]["printed"]
-    w(f"**Status, printed from landed.status:** {st or 'not read (run did-it-land)'} · **Review:** {key['review']} · **Window:** {key['window']['from']} to {key['window']['to']}")
-    w("")
-    w(f"**Author:** {esc(key['author'])} · **Fix review:** {esc(key['review_on'] or 'not set')} · **Decides:** {esc(b['decides'])}")
-    w("")
-    w("This review is blameless. It says what changed in the system and the process, not who erred.")
-    w("")
-    w(esc(key["summary"]))
-    w("")
-    w("## The bet, as the record has it")
-    w("")
-    w(f"Bar: {esc(b['bar'])} {esc(b['metric'])} by {esc(b['by'])}.")
-    w("")
-    w("| Step | Says | Figures |")
-    w("|---|---|---|")
-    for row in key["context"]:
-        figs = "; ".join(f"{loop.shown(f)} ({esc(f['source'])}, {loop.window_text(f)})" for f in row["figures"])
-        word = f"{row['word']}. " if row["word"] else ""
-        w(f"| {row['label']} | {esc(word + row['text'])} | {figs or 'none'} |")
-    w("")
-    n = key["figures"]["incidents"]
-    w(f"## Incidents in the window: {loop.shown(n)}")
-    w("")
-    w(f"Source: {esc(n['source'])}.")
-    w("")
-    if key["incidents"]:
-        w("| Incident | Severity | Started (UTC) | Restored (UTC) | Time to restore |")
-        w("|---|---|---|---|---|")
-        for i in key["incidents"]:
-            w(
-                f"| {esc(i['id'])} | {esc(i['severity'] or 'not set')} | {i['started_at'][:16].replace('T', ' ')} | "
-                f"{i['restored_at'][:16].replace('T', ' ')} | {loop.shown(i['time_to_restore'])} |"
-            )
-        w("")
-    w("## What changed")
-    w("")
-    for c in key["what_changed"]:
-        w(f"- **{esc(c['id'])}.** {esc(c['change'])}")
-        for ref, f in c["cited"].items():
-            w(f"  - {esc(ref)}: {loop.shown(f)}, {loop.window_text(f)}. Source: {esc(f['source'])}.")
-    w("")
-    if key["what_went_well"]:
-        w("## What went well")
-        w("")
-        for t in key["what_went_well"]:
-            w(f"- {esc(t)}")
-        w("")
-    w("## Fixes: who owns each")
-    w("")
-    w("| Fix | Done when | Owner | Due | Addresses |")
-    w("|---|---|---|---|---|")
-    for f in key["fixes"]:
-        w(f"| {esc(f['id'])}. {esc(f['fix'])} | {esc(f['done_when'])} | {esc(f['owner'])} | {esc(f['due'])} | {esc(', '.join(f.get('addresses') or []))} |")
-    w("")
-    w(f"Check: {key['check']}")
-    w("")
-    w(f"Written by {key['tool']} on {key['as_of']}. The status is did-it-land's, printed from landed.status. Every figure is computed in code from the source named.")
-    return "\n".join(out) + "\n"
-
-
 def fixes_csv(key: dict[str, Any]) -> str:
     buf = io.StringIO()
     wr = csv.writer(buf, lineterminator="\n")
@@ -516,7 +440,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"review: {errors} error(s). Nothing was written. Fix the review or the data, never the wording around a rule.")
         return 1
     # Every output is built in memory first, so a failure while rendering leaves the record as it was found.
-    outputs = [(args.html, render_html.page), (args.md, markdown), (args.csv, fixes_csv)]
+    outputs = [(args.html, render_html.page), (args.md, render_html.markdown), (args.csv, fixes_csv)]
     texts = [(Path(dest), build_text(key)) for dest, build_text in outputs if dest]
     loop.write(record_path, record, key)
     for dest, text in texts:

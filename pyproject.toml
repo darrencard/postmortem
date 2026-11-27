@@ -1,6 +1,6 @@
 [project]
 name = "postmortem"
-version = "0.3.0"
+version = "0.3.1"
 description = "A Claude skill that writes a blameless postmortem of a bet or an incident: what changed, and who owns each fix."
 requires-python = ">=3.11"
 # Standard library only, on purpose: the scripts run inside sandboxes that cannot install packages.
@@ -20,3 +20,5 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S"]
 [tool.ruff.lint.per-file-ignores]
 # Tests assert by design.
 "evals/**" = ["S101", "S603"]
+# The page's CSS and plain-words tables read best one rule or entry per line.
+"skills/postmortem/scripts/render_html.py" = ["E501"]

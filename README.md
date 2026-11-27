@@ -45,7 +45,7 @@ The bet's status is did-it-land's. The page prints `landed.status` and never com
 
 ```json
 "postmortem": {
-  "tool": "postmortem 0.3.0",
+  "tool": "postmortem 0.3.1",
   "as_of": "2026-11-26",
   "review": "learning review",
   "landed_status": {"printed": "landed", "from": "landed.status", "computed_by": "did-it-land 0.3.1"},
