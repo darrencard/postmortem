@@ -557,7 +557,9 @@ def markdown(key: dict[str, Any]) -> str:
         w("| What happened | Severity | Started (UTC) | Fixed (UTC) | Time to fix |")
         w("|---|---|---|---|---|")
         for i in key["incidents"]:
-            w(f"| {md(happened(i))} | {md(severity_word(i['severity']) or 'not set')} | {stamp(i['started_at'])} | {stamp(i['restored_at'])} | {loop.shown(i['time_to_restore'])} |")
+            w(
+                f"| {md(happened(i))} | {md(severity_word(i['severity']) or 'not set')} | {stamp(i['started_at'])} | {stamp(i['restored_at'])} | {loop.shown(i['time_to_restore'])} |"
+            )
     else:
         w("No incidents started in the window.")
     w("")

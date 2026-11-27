@@ -395,7 +395,10 @@ class Visual(unittest.TestCase):
         self.assertEqual(render_html.role_of("Head of Product, Quoting squad", "Quoting squad"), "Head of Product")
 
     def test_severity_prints_major_or_minor_and_the_source_code_only_in_the_fold(self):
-        self.assertEqual([render_html.severity_word(s) for s in ("P1", "P2", "p3", "P4", "SEV1", "SEV-3", "Critical", "")], ["major", "major", "minor", "minor", "major", "minor", "critical", ""])
+        self.assertEqual(
+            [render_html.severity_word(s) for s in ("P1", "P2", "p3", "P4", "SEV1", "SEV-3", "Critical", "")],
+            ["major", "major", "minor", "minor", "major", "minor", "critical", ""],
+        )
         public, fold = self.page.split("For your engineers", 1)
         self.assertNotRegex(svgkit.page_text(public), r"\bP\d\b")
         frame = svgkit.frames_in(self.page)[0]
