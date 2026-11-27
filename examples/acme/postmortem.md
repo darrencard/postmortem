@@ -1,6 +1,6 @@
 # Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.
 
-Postmortem v0.3.3. As of 2026-11-26. Illustrative: Acme is an invented company, and every figure comes from a synthetic fixture.
+Postmortem v0.3.4. As of 2026-11-26. Illustrative: Acme is an invented company, and every figure comes from a synthetic fixture.
 
 Quote drafting is a project you expect to move a number: quote draft acceptance rate, to 40% by 2026-11-15. That target comes from its landing brief, a one-page plan: what good looks like, by when, at what cost. This after-action review is blameless: it says what changed in the system and the process, not who erred.
 
@@ -54,7 +54,7 @@ Target: 40% quote draft acceptance rate by 2026-11-15.
 
 ## For your engineers
 
-Skill: `postmortem` 0.3.3.
+Skill: `postmortem` 0.3.4.
 
 | Incident | What happened | Severity in the source |
 |---|---|---|

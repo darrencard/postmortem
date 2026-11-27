@@ -1,6 +1,6 @@
 {
   "name": "postmortem",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A blameless postmortem. Step 4 of the Landing Loop: reads a bet's landing brief, its incidents (live through the Leader Report's PagerDuty and incident.io collectors, CSV as the fallback) and its landing/<bet>.json record up to landed, says what changed with the evidence for each, and gives every fix one owner and a due date. Writes only the postmortem key and one HTML page. Also writes a single incident's postmortem from PagerDuty or incident.io, Slack, the deploy log and Sentry, with every time computed in code.",
   "author": { "name": "Dacard" },
   "license": "MIT"

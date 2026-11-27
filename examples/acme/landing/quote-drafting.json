@@ -724,7 +724,7 @@
     }
   },
   "postmortem": {
-    "tool": "postmortem 0.3.3",
+    "tool": "postmortem 0.3.4",
     "as_of": "2026-11-26",
     "review": "learning review",
     "landed_status": {
@@ -761,7 +761,7 @@
       "fixes_owned": {
         "value": 4,
         "unit": "fixes",
-        "source": "review.json, checked by postmortem 0.3.3",
+        "source": "review.json, checked by postmortem 0.3.4",
         "window": {
           "from": "2026-09-07",
           "to": "2026-11-26"
@@ -771,7 +771,7 @@
       "fixes": {
         "value": 4,
         "unit": "fixes",
-        "source": "review.json, checked by postmortem 0.3.3",
+        "source": "review.json, checked by postmortem 0.3.4",
         "window": {
           "from": "2026-09-07",
           "to": "2026-11-26"

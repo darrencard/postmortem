@@ -1,10 +1,10 @@
 ---
 name: postmortem
-description: Writes a blameless postmortem, for a project or for one incident. For a project (step 04 of the Landing Loop), it reads the landing brief, the project's incidents (live through the Leader Report's PagerDuty and incident.io collectors, CSV as the fallback) and its project file (landing/<bet>.json) up to landed, says what changed with the evidence for each, gives every fix one owner and a due date, prints the project's status from landed.status, and writes only the postmortem key and one HTML page. For one incident, it builds the timeline from PagerDuty or incident.io, Slack, the deploy log and Sentry and computes every time in code. Refuses a fix without one owner, blame language, a status word in the prose and any figure the scripts did not compute. Use when the user asks for a postmortem, learning review, retro on a project (or a bet), post-incident review, incident report or RCA, or wants one checked for ownerless fixes, blame or unsourced figures.
+description: Writes a blameless postmortem, for a project or for one incident. For a project (step 04 of the Landing Loop), it reads the landing brief, the project's incidents (live through the Leader Report's PagerDuty and incident.io collectors, CSV as the fallback) and its project file (landing/<bet>.json) up to landed, says what changed with the evidence for each, gives every fix one owner and a due date, prints the project's status from landed.status, and writes only the postmortem key and one HTML page. For one incident, it builds the timeline from PagerDuty or incident.io, Slack, the deploy log and Sentry and computes every time in code. Refuses a fix without one owner, blame language, a status word in the prose and any figure the scripts did not compute. Use when the user asks for a postmortem, learning review, retro on a project, post-incident review, incident report or RCA, or wants one checked for ownerless fixes, blame or unsourced figures.
 license: MIT. See LICENSE in the repository root.
 metadata:
   author: Dacard
-  version: "0.3.3"
+  version: "0.3.4"
 ---
 
 # Postmortem
@@ -21,7 +21,7 @@ Everything runs locally, inside this session. The scripts make no network calls.
 
 ## A project review: step 04, Learn
 
-Say project, target and the project file to the user; if they call it a bet, use their word. The landing brief is a one-page plan: what good looks like, by when, at what cost.
+Say project, target and the project file to the user. Use the user's word, project or bet; the record key stays `bet`. The landing brief is a one-page plan: what good looks like, by when, at what cost.
 
 Reads: the landing brief the project file names (parsed by the Leader Report's `landing_brief.py`, vendored byte-identical, which refuses an incomplete brief), the project's incidents, and the project file's `portfolio`, `spec`, `cost`, `evals` and `landed` keys. It does not read `decisions`, `release` or `signals`, and keeps them, and every other key, exactly as found. Writes: only the `postmortem` key, one HTML page in the Leader Report style and the Landing Loop's one visual family (the verdict as the heading, scorecard rows for each incident's time to fix and each fix's due date and owner, one next step, engineering detail folded), its Markdown twin, and optionally the fixes as CSV. The page and the twin print the written parts in plain words (the large model, AI usage per task, time to fix); the project file and the engineers' fold keep them as written. Cited check words print in their skill's words: eval-kit's "not confirmed: too close to call", did-it-land's "inside normal ups and downs". `scripts/vendor/svgkit.py`, which draws the scorecard rows, is copied unchanged from landing-loop at the commit under `landing-loop` in `VENDORED.json`.
 

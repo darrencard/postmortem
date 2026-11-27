@@ -6,6 +6,8 @@ Install the postmortem skill from https://github.com/darrencard/postmortem and r
 
 A free Claude skill that writes a blameless postmortem of a project: what changed while it was live, with the evidence for each, and one owner and a due date for every fix.
 
+A bet is a project you expect to move a number; its bar is the target its landing brief sets.
+
 **Why it matters:** postmortems fail in two places, claims nobody can trace and fixes nobody owns. Here code prints every figure with its source, and a fix without one owner stops the page.
 
 ## See it in one command
@@ -45,7 +47,7 @@ The project's status is did-it-land's. The page prints `landed.status` and never
 
 ```json
 "postmortem": {
-  "tool": "postmortem 0.3.3",
+  "tool": "postmortem 0.3.4",
   "as_of": "2026-11-26",
   "review": "learning review",
   "landed_status": {"printed": "landed", "from": "landed.status", "computed_by": "did-it-land 0.3.1"},

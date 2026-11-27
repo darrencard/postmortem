@@ -33,7 +33,7 @@ import review  # noqa: E402
 import sample  # noqa: E402
 import svgkit  # noqa: E402
 
-VERSION = "0.3.3"
+VERSION = "0.3.4"
 
 
 def dumps(v: object) -> str:
@@ -378,7 +378,7 @@ class Visual(unittest.TestCase):
             self.assertIn(i["id"], svgkit.page_text(self.page.split("For your engineers", 1)[1]))
             self.assertIn(f'<span class="sc-l"><b>{loop.shown(i["time_to_restore"]).upper()}</b></span>', frame)
         for f in self.key["fixes"]:
-            self.assertIn(f'<span class="sc-l"><b>{f["due"]}</b></span>', frame)
+            self.assertIn(f'<span class="sc-l"><b><span class="nw">{f["due"]}</span></b></span>', frame)
             role = f["owner"].removesuffix(", Quoting squad")
             self.assertIn(f"</svg>{role}</span>", frame, "the role only; the team prints once in the head")
         # Brass is a person's call: one person mark per fix, none on an incident.
@@ -499,19 +499,19 @@ class Visual(unittest.TestCase):
         order = ['class="sk-hdr"', "<h1>", 'class="marks"', 'class="sc scg"', "What to do next", 'class="cols"', "For your engineers"]
         at = [body.index(x) for x in order]
         self.assertEqual(at, sorted(at))
-        self.assertIn("<h1>Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.</h1>", body)
+        self.assertIn('<h1>Quote drafting had two incidents since <span class="nw">2026-09-07</span>. All four fixes have one owner and a due date.</h1>', body)
         self.assertEqual(body.count('<div class="next">'), 1, "one next step leads the page")
-        self.assertIn('<span class="o">Head of Product, Quoting squad</span><span class="d">2026-12-17</span>', body)
-        self.assertIn("<span>Postmortem</span><span>As of 2026-11-26</span><span>v0.3.3</span>", body)
+        self.assertIn('<span class="o">Head of Product, Quoting squad</span><span class="d"><span class="nw">2026-12-17</span></span>', body)
+        self.assertIn('<span>Postmortem</span><span>As of <span class="nw">2026-11-26</span></span><span>v0.3.4</span>', body)
         self.assertNotIn("Book a call", body, "a sample is the skill's own output: no call to action")
         self.assertTrue(self.md.startswith("# Quote drafting had two incidents since 2026-09-07."))
 
-    def test_no_text_smaller_than_11px_at_any_width(self):
+    def test_no_text_smaller_than_12px_at_any_width(self):
         css = " ".join(re.findall(r"<style>(.*?)</style>", self.page, re.S) + re.findall(r'style="([^"]*)"', self.page))
         sizes = [float(m) for m in re.findall(r"(?:font-size:\s*|font:[^;{}]*?)(\d+(?:\.\d+)?)px", css)]
         sizes += [float(m) for m in re.findall(r'font-size="(\d+(?:\.\d+)?)"', self.page)]
         self.assertTrue(sizes)
-        self.assertGreaterEqual(min(sizes), 11)
+        self.assertGreaterEqual(min(sizes), 12)
         # The vendored template is untouched on disk: the page raises its small sizes as it inlines them.
         self.assertIn("font:400 10px/16px", (SKILL / "assets" / "vendor" / "template.html").read_text(encoding="utf-8"))
 
