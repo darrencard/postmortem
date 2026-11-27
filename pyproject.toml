@@ -1,6 +1,6 @@
 [project]
 name = "postmortem"
-version = "0.3.1"
+version = "0.3.2"
 description = "A Claude skill that writes a blameless postmortem of a bet or an incident: what changed, and who owns each fix."
 requires-python = ">=3.11"
 # Standard library only, on purpose: the scripts run inside sandboxes that cannot install packages.

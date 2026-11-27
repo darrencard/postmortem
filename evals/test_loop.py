@@ -33,7 +33,7 @@ import review  # noqa: E402
 import sample  # noqa: E402
 import svgkit  # noqa: E402
 
-VERSION = "0.3.1"
+VERSION = "0.3.2"
 
 
 def dumps(v: object) -> str:
@@ -362,32 +362,26 @@ class Visual(unittest.TestCase):
 
     def test_svgkit_matches_its_landing_loop_pin(self):
         pin = json.loads((SKILL / "VENDORED.json").read_text(encoding="utf-8"))["landing-loop"]
-        self.assertEqual(pin["commit"], "5d01756d08ab3eb92b457c3286729791df6bcf5f")
+        self.assertEqual(pin["commit"], "78784efd2ecd5282f6ec264e545ce2075e459be2")
         self.assertEqual(set(pin["files"]), {"scripts/vendor/svgkit.py"})
         for rel, info in pin["files"].items():
             digest = hashlib.sha256((SKILL / rel).read_bytes()).hexdigest()
             self.assertEqual(digest, info["sha256"], f"{rel} changed. Copy it again from landing-loop at the pinned commit and update VENDORED.json.")
 
     def test_the_visual_draws_only_figures_the_page_prints(self):
-        visuals = svgkit.visuals_in(self.page)
-        self.assertEqual(len(visuals), 2, "the wide picture and the tall one")
         self.assertEqual(svgkit.unprinted(self.page), [])
-        text = svgkit.page_text(self.page)
-        for svg in visuals:
-            drawn = svgkit.texts_in(svg)
-            for i in self.key["incidents"]:
-                # Each incident is labelled by what happened; its number is in the engineers' fold.
-                self.assertIn(i["what_happened"].upper(), drawn)
-                self.assertNotIn(i["id"], drawn)
-                self.assertIn(i["id"], svgkit.page_text(self.page.split("For your engineers", 1)[1]))
-                self.assertIn(f"{i['time_to_restore']['value']} MIN", drawn)
-                self.assertIn(loop.shown(i["time_to_restore"]).upper(), text)
-            for f in self.key["fixes"]:
-                self.assertIn(f["due"], drawn)
-                self.assertIn(f["owner"].upper(), drawn, "each fix's owner prints in its chip")
-            # One brass chip per fix and one brass person at the fix review: brass is a person's call.
-            self.assertEqual(svg.count('stroke="var(--brass)"'), len(self.key["fixes"]))
-            self.assertEqual(svg.count('fill="var(--brass)"'), 2, "the fix review's person mark: head and shoulders")
+        frame = svgkit.frames_in(self.page)[0]
+        for i in self.key["incidents"]:
+            # Each incident is named by what happened; its number is in the engineers' fold.
+            self.assertIn(f'<span class="sc-n">{i["what_happened"]}</span>', frame)
+            self.assertNotIn(i["id"], svgkit.page_text(frame))
+            self.assertIn(i["id"], svgkit.page_text(self.page.split("For your engineers", 1)[1]))
+            self.assertIn(f'<span class="sc-l"><b>{loop.shown(i["time_to_restore"]).upper()}</b></span>', frame)
+        for f in self.key["fixes"]:
+            self.assertIn(f'<span class="sc-l"><b>{f["due"]}</b></span>', frame)
+            self.assertIn(f"{f['owner']}</span>", frame)
+        # Brass is a person's call: one person mark per fix, none on an incident.
+        self.assertEqual(frame.count('class="sc-o"'), len(self.key["fixes"]))
 
     def test_green_and_red_only_beside_their_words(self):
         body = self.page.split("</style>", 1)[1]
@@ -396,16 +390,62 @@ class Visual(unittest.TestCase):
             self.assertNotIn(f"var(--{word})", rest)
             self.assertNotIn(f"st {word}", rest)
         self.assertEqual(body.count('<span class="st landed" data-from="landed">landed</span>'), 1)
+        # No status dot in the rows: time to fix has no status.
+        for row in re.findall(r'<div class="sc-r">.*?</div>', body):
+            self.assertNotRegex(row, r'class="ac (landed|stalled)"')
 
     def test_each_visual_states_its_answer(self):
-        labels = re.findall(r'<svg class="sk-(?:wide|tall)"[^>]* aria-label="([^"]+)"', self.page)
-        self.assertEqual(len(labels), 2)
-        for label in labels:
-            self.assertEqual(
-                label,
-                "Two incidents from 2026-09-07 to 2026-11-26: drafts timed out on 2026-10-30, fixed in 72 minutes; price sync lagged on 2026-11-18, fixed in 22 minutes. "
-                "4 fixes, each with one owner, due from 2026-12-10 to 2027-01-08. The fix review is on 2026-12-17.",
-            )
+        labels = re.findall(r'role="img" aria-label="([^"]+)"', self.page)
+        self.assertEqual(labels, [render_html.heading(self.key)])
+
+    # The scorecard grammar (landing-loop tools/SCORECARD-ROLLOUT.md, svgkit 1.2.0)
+
+    def css(self) -> str:
+        return self.page.split("<style>", 1)[1].split("</style>", 1)[0]
+
+    def test_no_text_inside_a_picture_and_no_picture_scales(self):
+        self.assertEqual(svgkit.svgs_with_text(self.page), [], "text inside an SVG")
+        self.assertEqual(svgkit.scaled_svgs_in(self.page), [], "a picture with a viewBox would scale")
+
+    def test_labels_render_12px_and_names_14px(self):
+        css = self.css()
+        self.assertEqual(set(svgkit.font_sizes(css)), {"var(--sc-m)", "var(--sc-n)"})
+        self.assertIn("--sc-m:calc(12px / var(--sc-z))", css)
+        self.assertIn("--sc-n:calc(14px / var(--sc-z))", css)
+        self.assertIn(".scg{--sc-z:1;", css, "a sample page has no zoom")
+
+    def test_no_box_inside_the_frame_and_no_overlap(self):
+        self.assertEqual(svgkit.boxes_in_frames(self.page, self.css()), [])
+        self.assertNotIn('class="chip"', self.page.split("For your engineers", 1)[0])
+        self.assertNotIn("position:absolute", svgkit.SCORECARD_CSS)
+
+    def test_no_legacy_svgkit_primitive_draws_on_the_page(self):
+        import warnings
+
+        self.assertEqual(svgkit.legacy_in(self.page), [])
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            render_html.page(self.key)
+
+    def test_one_frame_one_row_per_incident_and_fix(self):
+        frames = svgkit.frames_in(self.page)
+        self.assertEqual(len(frames), 1)
+        self.assertEqual(frames[0].count('<div class="sc-r">'), len(self.key["incidents"]) + len(self.key["fixes"]))
+        # One bar per incident, scaled to the longest: no plan bar and no hatching, as there is no plan for time to fix.
+        self.assertEqual(frames[0].count('<svg class="sc-sh"'), len(self.key["incidents"]))
+        self.assertNotIn("sc-pv", frames[0])
+        self.assertNotIn("<pattern", frames[0])
+        longest = max(render_html.minutes(i["time_to_restore"]) for i in self.key["incidents"])
+        widths = re.findall(r'<rect class="a" x="0" y="0" width="([\d.]+)%"', frames[0])
+        self.assertEqual(widths, [svgkit.num(render_html.minutes(i["time_to_restore"]) / longest * 100) for i in self.key["incidents"]])
+
+    def test_cited_check_words_are_the_contract_words(self):
+        text = svgkit.page_text(self.page)
+        self.assertIn("NOT CONFIRMED: TOO CLOSE TO CALL", text)
+        self.assertNotIn("inside noise", self.page)
+        self.assertNotIn("inside noise", self.md)
+        self.assertEqual(render_html.cited("within-noise"), "inside normal ups and downs")
+        self.assertEqual(render_html.cited("not confirmed: inside noise"), "not confirmed: too close to call")
 
     def test_public_copy_uses_plain_words(self):
         public = svgkit.page_text(self.page.split("For your engineers", 1)[0]).lower()
@@ -424,35 +464,15 @@ class Visual(unittest.TestCase):
 
     def test_the_page_follows_the_sample_anatomy(self):
         body = self.page.split('<main class="solo">', 1)[1]
-        order = ['class="sk-hdr"', "<h1>", 'class="marks"', 'class="panel"', "What to do next", 'class="cols"', "For your engineers"]
+        order = ['class="sk-hdr"', "<h1>", 'class="marks"', 'class="sc scg"', "What to do next", 'class="cols"', "For your engineers"]
         at = [body.index(x) for x in order]
         self.assertEqual(at, sorted(at))
         self.assertIn("<h1>Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.</h1>", body)
         self.assertEqual(body.count('<div class="next">'), 1, "one next step leads the page")
         self.assertIn('<span class="o">Head of Product, Quoting squad</span><span class="d">2026-12-17</span>', body)
-        self.assertIn("<span>Postmortem</span><span>As of 2026-11-26</span><span>v0.3.1</span>", body)
+        self.assertIn("<span>Postmortem</span><span>As of 2026-11-26</span><span>v0.3.2</span>", body)
         self.assertNotIn("Book a call", body, "a sample is the skill's own output: no call to action")
         self.assertTrue(self.md.startswith("# Quote drafting had two incidents since 2026-09-07."))
-
-    def test_incident_labels_do_not_touch_each_other_or_the_lines(self):
-        for svg in svgkit.visuals_in(self.page):
-            width = float(re.search(r'viewBox="0 0 ([\d.]+)', svg).group(1))
-            boxes = []
-            for x, y, anchor, text in re.findall(r'<text x="([\d.]+)" y="([\d.]+)" class="sk-l"(?: text-anchor="(\w+)")?[^>]*>([^<]*)<', svg):
-                w = svgkit.label_width(text)
-                a = float(x) - (w if anchor == "end" else 0)
-                boxes.append((a, a + w, float(y) - 9, float(y), text))
-            for a, b, _top, _bottom, text in boxes:
-                self.assertGreaterEqual(a, 0, text)
-                self.assertLessEqual(b, width, text)
-            stems = [(float(x), float(y1), float(y2)) for x, y1, y2 in re.findall(r'<line x1="([\d.]+)" y1="([\d.]+)" x2="\1" y2="([\d.]+)" stroke="var\(--(?:t1|line3)\)"', svg)]
-            for i in self.key["incidents"]:
-                box = next(b for b in boxes if b[4] == i["what_happened"].upper())
-                for other in boxes:
-                    if other is not box:
-                        self.assertFalse(box[0] < other[1] and other[0] < box[1] and box[2] < other[3] and other[2] < box[3], (box, other))
-                for x, y1, y2 in stems:
-                    self.assertFalse(box[0] < x < box[1] and min(y1, y2) < box[3] and box[2] < max(y1, y2), (box, x))
 
     def test_no_text_smaller_than_11px_at_any_width(self):
         css = " ".join(re.findall(r"<style>(.*?)</style>", self.page, re.S) + re.findall(r'style="([^"]*)"', self.page))
@@ -460,8 +480,6 @@ class Visual(unittest.TestCase):
         sizes += [float(m) for m in re.findall(r'font-size="(\d+(?:\.\d+)?)"', self.page)]
         self.assertTrue(sizes)
         self.assertGreaterEqual(min(sizes), 11)
-        # The phone picture is 340 wide; at 390 and 375 the panel gives it 340px or more, so its 11px labels never shrink.
-        self.assertIn("@media (max-width:440px){.panel{margin:0 -8px;padding:16px 8px 14px}}", self.page)
         # The vendored template is untouched on disk: the page raises its small sizes as it inlines them.
         self.assertIn("font:400 10px/16px", (SKILL / "assets" / "vendor" / "template.html").read_text(encoding="utf-8"))
 

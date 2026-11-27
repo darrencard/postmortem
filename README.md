@@ -1,10 +1,10 @@
 # Postmortem: what changed, and who owns each fix
 
 ```text
-Install the postmortem skill from https://github.com/darrencard/postmortem and run a blameless review of one bet. Read its landing brief and its landing/<bet>.json record, pull the bet's incidents from PagerDuty or incident.io through the skill's collectors (or take my CSV), and draft what changed with the evidence for each. Ask me for each fix's owner and due date, run review.py until it passes, and show me the HTML page.
+Install the postmortem skill from https://github.com/darrencard/postmortem and run a blameless review of one project I'm working on. Read its landing brief and its project file (landing/<bet>.json), pull the project's incidents from PagerDuty or incident.io through the skill's collectors (or take my CSV), and draft what changed with the evidence for each. Ask me for each fix's owner and due date, run review.py until it passes, and show me the HTML page.
 ```
 
-A free Claude skill that writes a blameless postmortem of a bet: what changed while it was live, with the evidence for each, and one owner and a due date for every fix.
+A free Claude skill that writes a blameless postmortem of a project: what changed while it was live, with the evidence for each, and one owner and a due date for every fix.
 
 **Why it matters:** postmortems fail in two places, claims nobody can trace and fixes nobody owns. Here code prints every figure with its source, and a fix without one owner stops the page.
 
@@ -35,17 +35,17 @@ Step 04 (Learn) of the Landing Loop.
 
 | Reads | Writes |
 |---|---|
-| The landing brief the record names, parsed by the Leader Report's `landing_brief.py` (vendored byte-identical); an incomplete brief is refused | The `postmortem` key of `landing/<bet>.json`, and no other key |
+| The landing brief (a one-page plan: what good looks like, by when, at what cost) the project file names, parsed by the Leader Report's `landing_brief.py` (vendored byte-identical); an incomplete brief is refused | The `postmortem` key of `landing/<bet>.json`, and no other key |
 | Incidents: live from PagerDuty or incident.io through the Leader Report's collectors, vendored at a pinned commit; a CSV as the fallback | One HTML page in the Leader Report style, its Markdown twin, and the fixes as CSV for a tracker |
-| The record's `portfolio`, `spec`, `cost`, `evals` and `landed` keys | |
+| The project file's `portfolio`, `spec`, `cost`, `evals` and `landed` keys | |
 
-The bet's status is did-it-land's. The page prints `landed.status` and never computes one. The review follows it: a learning review for a landed bet, a stall review for a stalled one. This skill's own check words are **what changed** and **who owns each fix**.
+The project's status is did-it-land's. The page prints `landed.status` and never computes one. The review follows it: a learning review for a landed project, a stall review for a stalled one. This skill's own check words are **what changed** and **who owns each fix**.
 
-## The record key
+## The project file's key
 
 ```json
 "postmortem": {
-  "tool": "postmortem 0.3.1",
+  "tool": "postmortem 0.3.2",
   "as_of": "2026-11-26",
   "review": "learning review",
   "landed_status": {"printed": "landed", "from": "landed.status", "computed_by": "did-it-land 0.3.1"},
@@ -67,9 +67,9 @@ The bet's status is did-it-land's. The page prints `landed.status` and never com
 |---|---|
 | A fix with no owner, a placeholder ("the team", "TBD", "on-call") or two owners | One person sees it through |
 | A fix with no due date or no "done when" | You can tell when it is finished |
-| A change with no evidence, or evidence that is not a figure in the record or an incident | Every claim traces to a source |
+| A change with no evidence, or evidence that is not a figure in the project file or an incident | Every claim traces to a source |
 | A number the page does not print | The model never writes a figure |
-| landed, watch or stalled in the prose | Only did-it-land sets a bet's status |
+| landed, watch or stalled in the prose | Only did-it-land sets a project's status |
 | "Human error", "careless", "should have caught" | Blameless: systems and process, not people |
 | MTTR or a mean | Each incident keeps its own time |
 
@@ -79,7 +79,7 @@ It also writes a single incident's postmortem from PagerDuty or incident.io, Sla
 
 - It says what changed, not what caused the metric to move. A change is listed with its evidence, never as proof.
 - An incident still open is left out by the collectors and counted in their output, not on the page.
-- This version does not read `decisions`, `release` or `signals`; it keeps them untouched in the record.
+- This version does not read `decisions`, `release` or `signals`; it keeps them untouched in the project file.
 - The collectors read saved responses. Fetching them (a connector, or an API call the user runs) happens first.
 
 Not yet run on a real team's data.

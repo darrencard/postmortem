@@ -1,29 +1,31 @@
 ---
 name: postmortem
-description: Writes a blameless postmortem, for a bet or for one incident. For a bet (step 04 of the Landing Loop), it reads the landing brief, the bet's incidents (live through the Leader Report's PagerDuty and incident.io collectors, CSV as the fallback) and its landing/<bet>.json record up to landed, says what changed with the evidence for each, gives every fix one owner and a due date, prints the bet's status from landed.status, and writes only the postmortem key and one HTML page. For one incident, it builds the timeline from PagerDuty or incident.io, Slack, the deploy log and Sentry and computes every time in code. Refuses a fix without one owner, blame language, a status word in the prose and any figure the scripts did not compute. Use when the user asks for a postmortem, learning review, retro on a bet, post-incident review, incident report or RCA, or wants one checked for ownerless fixes, blame or unsourced figures.
+description: Writes a blameless postmortem, for a project or for one incident. For a project (step 04 of the Landing Loop), it reads the landing brief, the project's incidents (live through the Leader Report's PagerDuty and incident.io collectors, CSV as the fallback) and its project file (landing/<bet>.json) up to landed, says what changed with the evidence for each, gives every fix one owner and a due date, prints the project's status from landed.status, and writes only the postmortem key and one HTML page. For one incident, it builds the timeline from PagerDuty or incident.io, Slack, the deploy log and Sentry and computes every time in code. Refuses a fix without one owner, blame language, a status word in the prose and any figure the scripts did not compute. Use when the user asks for a postmortem, learning review, retro on a project (or a bet), post-incident review, incident report or RCA, or wants one checked for ownerless fixes, blame or unsourced figures.
 license: MIT. See LICENSE in the repository root.
 metadata:
   author: Dacard
-  version: "0.3.1"
+  version: "0.3.2"
 ---
 
 # Postmortem
 
-Two jobs, one set of rules. **A bet review** (step 04 of the Landing Loop): what changed while the bet was live, and who owns each fix. **An incident postmortem**: one incident's timeline, times and action items. Both are blameless, both compute every figure in code, and both refuse a fix without one owner and a due date.
+Two jobs, one set of rules. **A project review** (step 04 of the Landing Loop): what changed while the project was live, and who owns each fix. **An incident postmortem**: one incident's timeline, times and action items. Both are blameless, both compute every figure in code, and both refuse a fix without one owner and a due date.
 
 Everything runs locally, inside this session. The scripts make no network calls. Do not send the user's data anywhere.
 
 ## Rules that override everything else
 
-1. **Never write a figure, a time or a status yourself.** Code computes every figure and prints it with its source and window. The bet's status (landed, watch or stalled) is did-it-land's: the page prints `landed.status` and never computes one. Do not use those three words in anything you write; `review.py` refuses them as `status-word`.
+1. **Never write a figure, a time or a status yourself.** Code computes every figure and prints it with its source and window. The project's status (landed, watch or stalled) is did-it-land's: the page prints `landed.status` and never computes one. Do not use those three words in anything you write; `review.py` refuses them as `status-word`.
 2. **Never write a fix without one owner.** One named person and a YYYY-MM-DD due date. "The team", "TBD", "on-call" or two names are refused. If the user has no owner yet, ask who will see it through. Do not pick one for them.
 3. **Never talk past the checker.** If a check reports an error, fix the review or the data. Do not reword a sentence to slip under a rule.
 
-## A bet review: step 04, Learn
+## A project review: step 04, Learn
 
-Reads: the landing brief the record names (parsed by the Leader Report's `landing_brief.py`, vendored byte-identical, which refuses an incomplete brief), the bet's incidents, and the record's `portfolio`, `spec`, `cost`, `evals` and `landed` keys. It does not read `decisions`, `release` or `signals`, and keeps them, and every other key, exactly as found. Writes: only the `postmortem` key, one HTML page in the Leader Report style and the Landing Loop's one visual family (the verdict as the heading, a timeline from each incident to each fix's due date with its owner, one next step, engineering detail folded), its Markdown twin, and optionally the fixes as CSV. The page and the twin print the written parts in plain words (the large model, AI usage per task, time to fix); the record and the engineers' fold keep them as written. `scripts/vendor/svgkit.py`, which draws the picture, is copied unchanged from landing-loop at the commit under `landing-loop` in `VENDORED.json`.
+Say project, target and the project file to the user; if they call it a bet, use their word. The landing brief is a one-page plan: what good looks like, by when, at what cost.
 
-The kind of review follows the printed status: a learning review for a landed bet, a stall review for a stalled one, a mid-course review on watch, an incident review when did-it-land has not run.
+Reads: the landing brief the project file names (parsed by the Leader Report's `landing_brief.py`, vendored byte-identical, which refuses an incomplete brief), the project's incidents, and the project file's `portfolio`, `spec`, `cost`, `evals` and `landed` keys. It does not read `decisions`, `release` or `signals`, and keeps them, and every other key, exactly as found. Writes: only the `postmortem` key, one HTML page in the Leader Report style and the Landing Loop's one visual family (the verdict as the heading, scorecard rows for each incident's time to fix and each fix's due date and owner, one next step, engineering detail folded), its Markdown twin, and optionally the fixes as CSV. The page and the twin print the written parts in plain words (the large model, AI usage per task, time to fix); the project file and the engineers' fold keep them as written. Cited check words print in their skill's words: eval-kit's "not confirmed: too close to call", did-it-land's "inside normal ups and downs". `scripts/vendor/svgkit.py`, which draws the scorecard rows, is copied unchanged from landing-loop at the commit under `landing-loop` in `VENDORED.json`.
+
+The kind of review follows the printed status: a learning review for a landed project, a stall review for a stalled one, a mid-course review on watch, an incident review when did-it-land has not run.
 
 ```
 - [ ] 1. Incidents  live first, CSV as the fallback

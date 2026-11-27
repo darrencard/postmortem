@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2, 2026-11-27
+
+- The picture is scorecard rows in the grammar of the outcome scorecard on dacard.ai/update (svgkit 1.2.0, landing-loop 78784ef): one row per incident, named by what happened, with one ink bar for its time to fix scaled to the longest in the frame (no plan bar and no hatching, as there is no plan for time to fix), the time and the severity; then one row per fix with its due date and its one owner in brass. Geist Mono 12px for labels and figures, Geist 14px for names, no text inside a picture, no box inside the frame. The timeline, its panel and the boxed chips are gone; words print as text.
+- Cited check words in their skill's words, the engineers' fold included: eval-kit's "not confirmed: too close to call", did-it-land's "inside normal ups and downs".
+- README and SKILL.md in plain words: project, target, the project file, the landing brief defined as a one-page plan. Keys, file names and flags are unchanged. SKILL.md uses the user's own word if they say bet.
+- Tests from the rollout recipe: no text inside an SVG, no scaled SVG, labels 12px and names 14px, no box inside the frame, no legacy svgkit primitive (rendered with DeprecationWarning as an error), one frame with one row per incident and fix, the aria-label is the verdict, and the cited check words.
+
 ## 0.3.1, 2026-11-27
 
 - The HTML page follows the Landing Loop sample anatomy: the shared header (mark, DACARD, skill, date, version, blue Illustrative tag), the verdict as the heading ("Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date."), the project's status from did-it-land, the signature picture, one next step (the fix review) with the brief's decider in brass and its date, then what changed and who fixes it in two columns, and the incidents, what went well and the earlier steps in two more. Evidence with its sources, the written parts as written, the check line and the record key fold under "For your engineers".

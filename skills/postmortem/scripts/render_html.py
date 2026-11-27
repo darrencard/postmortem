@@ -6,15 +6,19 @@ byte-identical at a pinned commit), and draws its picture with svgkit (scripts/v
 byte-identical from landing-loop). Only a few rules for this page's layout are added.
 
 It reads top down for someone who has never seen the loop: the shared header, the verdict as the heading, the
-project's status as did-it-land wrote it, then the picture: one timeline from the window opening, through each
-incident and the review, to each fix's due date with its owner. One next step follows: the fix review, owned by the
-person the landing brief names. What changed and who fixes it sit in two columns, then the incidents and what went
-well; evidence, sources, model ids and the record key fold under "For your engineers". Public copy uses plain words:
-after-action review, project, target, time to fix, AI usage per task, the large model.
+project's status as did-it-land wrote it, then the picture as scorecard rows (svgkit 1.2.0): one row per incident,
+named by what happened, with one ink bar for its time to fix scaled to the longest (there is no plan for time to fix,
+so no plan bar and no hatching), then one row per fix with its due date and its one owner in brass. Geist Mono 12px
+for labels and figures, Geist 14px for names, fixed-height bars with no text in them. One next step follows: the fix
+review, owned by the person the landing brief names. What changed and who fixes it sit in two columns, then the
+incidents and what went well; evidence, sources, model ids and the project file's key fold under "For your
+engineers". Public copy uses plain words: after-action review, project, target, time to fix, AI usage per task, the
+large model. Cited check words print in their skill's words: eval-kit's "not confirmed: too close to call",
+did-it-land's "inside normal ups and downs".
 
 Colour means one thing each: green, grey-white and red only inside the status word, printed from landed.status and
-never computed; brass for a person's call (each fix's owner, and who decides); ink for what happened. The picture
-draws only figures the page prints, and its aria-label states the answer.
+never computed; brass for a person's call (each fix's owner, and who decides); ink for what happened. Words are
+text, never boxed chips. The picture draws only figures the page prints, and its aria-label states the answer.
 
 Nothing is loaded from the network, nothing depends on the clock or the machine, and every piece of text from a
 source or a person is escaped.
@@ -26,7 +30,6 @@ from __future__ import annotations
 
 import datetime as dt
 import html
-import itertools
 import re
 import sys
 from pathlib import Path
@@ -50,9 +53,7 @@ main.solo{margin-left:0}
 .solo .lede b{color:var(--t1);font-weight:500}
 .marks{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;margin:0 0 20px;font:400 11px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
 .marks>span{display:inline-flex;align-items:center;gap:10px}
-.chip{font:400 11px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t1);border:1px solid var(--line3);border-radius:3px;padding:1px 6px;white-space:nowrap}
-.panel{border:1px solid var(--line);border-radius:12px;background:var(--s1);padding:24px 28px 20px}
-@media (min-width:1100px){.panel .sk{display:grid;grid-template-columns:640px minmax(0,1fr);gap:16px 40px;align-items:center}.panel .sk figcaption{margin-top:0;flex-direction:column;align-items:flex-start}}
+.wd{font:400 12px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--t1);white-space:nowrap}
 .next{margin-top:28px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:8px 32px;align-items:baseline;border:1px solid var(--brass);border-radius:12px;padding:20px 24px;background:var(--brass-bg)}
 .next>b{font:400 11px/22px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
 .next p{margin:0;font-size:16px;line-height:1.5;color:var(--t1)}
@@ -85,12 +86,11 @@ main.solo{margin-left:0}
 ::selection{background:var(--t1);color:var(--bg)}
 :focus-visible{outline-color:var(--t1)}
 .foot{max-width:1120px;margin:0 auto;padding:28px 40px 64px;color:var(--t3);font-size:12px}
-@media (max-width:980px){.foot{padding:24px 16px 48px}.solo .slide.cover{padding-top:24px}.cols,.next{grid-template-columns:1fr}.panel{padding:18px 16px 16px}
+@media (max-width:980px){.foot{padding:24px 16px 48px}.solo .slide.cover{padding-top:24px}.cols,.next{grid-template-columns:1fr}
 .stack table,.stack tbody,.stack tr,.stack td{display:block}.stack tr:first-child{display:none}.stack tr{padding:10px 16px;border-bottom:1px solid var(--line)}
 .stack td{border:0;padding:3px 0;display:grid;grid-template-columns:118px 1fr;gap:12px}.stack td.num{text-align:left;white-space:normal}
 .stack td::before{content:attr(data-l);font:400 11px/20px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}}
 @media (max-width:560px){.figs>div{grid-template-columns:1fr;gap:0}}
-@media (max-width:440px){.panel{margin:0 -8px;padding:16px 8px 14px}}
 """
 
 # The smallest text the page prints, at every width. The vendored template and svgkit keep their own sizes on disk
@@ -126,11 +126,25 @@ WORDS = (
     (r"\bv(\d+(?:\.\d+)+)\b", r"version \1"),
     (r"\bheld-out pass rate\b", "pass rate on test cases kept back"),
     (r"\binside noise\b", "too close to call"),
+    (r"\bwithin[- ]noise\b", "inside normal ups and downs"),
     (r"\bthe PRD\b", "the build plan"),
     (r"\bthe bar\b", "the target"),
     (r"\bBrief score\b", "Plan score"),
 )
 STEP = {"01 Decide": "Decide", "02 Spec": "Build plan check", "03 Build, cost": "Cost check", "03 Build, evals": "Quality test", "04 Learn, did-it-land": "Did it land"}
+
+
+# One check word per skill: eval-kit's word is "not confirmed: too close to call", and did-it-land's noise flag reads
+# "inside normal ups and downs". An older project file may still carry the earlier wording; wherever this page cites
+# either word, the fold included, it prints the contract's.
+CITED = ((r"\binside noise\b", "too close to call"), (r"\bwithin[- ]noise\b", "inside normal ups and downs"))
+
+
+def cited(word: str | None) -> str:
+    out = word or ""
+    for pattern, to in CITED:
+        out = re.sub(pattern, to, out)
+    return out
 
 
 def e(text: Any) -> str:
@@ -189,7 +203,7 @@ def count_word(n: int) -> str:
 def status_mark(status: str | None) -> str:
     """landed.status as the template draws it, the word always printed. The only place a status colour appears."""
     if status is None:
-        return '<span class="chip" data-from="landed">not read: run did-it-land</span>'
+        return '<span class="wd" data-from="landed">not read: run did-it-land</span>'
     return f'<span class="st {e(status)}" data-from="landed">{e(status)}</span>'
 
 
@@ -212,131 +226,45 @@ def _day(text: str) -> int:
     return dt.date.fromisoformat(text[:10]).toordinal()
 
 
-# The signature picture
+# The signature picture: scorecard rows (svgkit 1.2.0)
 
 
-def place(
-    incidents: list[dict[str, Any]], x: Any, rx: float, width: float, wide: bool, fixed: tuple[tuple[float, float, int], ...] = ()
-) -> tuple[list[tuple[float, float]], list[tuple[float, str]]]:
-    """Where each incident's mark and label go: a row above the axis and a side of the mark. Every choice is scored and
-    the cheapest kept: a label off the picture, over another label or across another incident's stem costs most;
-    across the review's line (desktop only, where it runs to the top) costs less. Few incidents, so this is exhaustive;
-    past six it takes each incident's cheapest spot in turn. `fixed` holds other labels already drawn: (from, to, row)."""
-    rows = (44.0, 74.0)
-    xs = [x(_day(i["started_at"])) for i in incidents]
-    widths = [max(sk.label_width(happened(i)), sk.label_width(short(i))) for i in incidents]
-
-    def span(n: int, side: str) -> tuple[float, float]:
-        return (xs[n] - 12 - widths[n], xs[n] - 12) if side == "left" else (xs[n] + 12, xs[n] + 12 + widths[n])
-
-    def cost(choice: list[tuple[int, str]]) -> int:
-        total = 0
-        for n, (row, side) in enumerate(choice):
-            a, b = span(n, side)
-            total += 100 if a < 0 or b > width else 0
-            total += 10 if wide and a - 4 < rx < b + 4 else 0
-            total += 0 if side == "right" else 1
-            total += sum(100 for a2, b2, r2 in fixed if r2 == row and a < b2 + 8 and a2 < b + 8)
-            for m, (row2, side2) in enumerate(choice):
-                if m == n:
-                    continue
-                if row2 == row:
-                    a2, b2 = span(m, side2)
-                    total += 100 if a < b2 + 8 and a2 < b + 8 else 0
-                    total += 100 if a - 8 < xs[m] < b + 8 else 0
-                elif row2 < row and a - 4 < xs[m] < b + 4:  # m's stem runs down through this row
-                    total += 50
-        return total
-
-    options = [(r, side) for r in range(len(rows)) for side in ("right", "left")]
-    if len(incidents) <= 6:
-        best = min(itertools.product(options, repeat=len(incidents)), key=lambda c: cost(list(c)), default=())
-    else:
-        best = []
-        for _ in incidents:
-            best.append(min(options, key=lambda o: cost([*best, o])))
-    marks = [(xs[n], rows[row]) for n, (row, _) in enumerate(best)]
-    labels = [(xs[n] - 12, "end") if side == "left" else (xs[n] + 12, "start") for n, (_, side) in enumerate(best)]
-    return marks, labels
+def minutes(f: dict[str, Any]) -> float:
+    """A time to fix in minutes, so every incident's bar shares one scale."""
+    per = {"minutes": 1, "hours": 60, "days": 1440}.get(f["unit"], 1)
+    return f["value"] * per
 
 
-def timeline(key: dict[str, Any], variant: str) -> str:
-    """One axis in time: the window opening, each incident (ink) with its time to fix, the review, the fix review (a
-    person's call, brass), and one row per fix from the review to its due date, its owner in a brass chip."""
-    wide = variant == "wide"
-    width = 640.0 if wide else float(sk.TALL)
-    x0, x1 = (64.0, 540.0) if wide else (8.0, 252.0)
-    fixes = [f for f in key["fixes"] if f.get("due")]
-    days = [_day(key["window"]["from"]), _day(key["as_of"])] + [_day(f["due"]) for f in fixes]
-    if key.get("review_on"):
-        days.append(_day(key["review_on"]))
-    lo, hi = min(days), max(days)
-    x = sk.scale((lo, hi), (x0, x1))
-    axis = 104.0
-    parts = [sk.rule(x0, axis, x1, axis, tone=sk.LINE2)]
-    # Month ticks: the names only, so the picture adds no number of its own.
-    d = dt.date.fromordinal(lo).replace(day=1)
-    while d.toordinal() <= hi:
-        if d.toordinal() >= lo:
-            mx = x(d.toordinal())
-            parts.append(sk.rule(mx, axis - 3, mx, axis + 3, tone=sk.LINE3))
-            parts.append(sk.label(mx + 4, axis + 16, d.strftime("%b")))
-        d = (d + dt.timedelta(days=32)).replace(day=1)
-    parts.append(sk.deadline(x(lo), 14, axis, tone=sk.LINE3))
-    parts.append(sk.label(x(lo) + 6, 24, f"From {key['window']['from']}"))
-    # Incidents: an ink mark on the day it started, with what happened and its time to fix beside it. On a phone the
-    # review's line starts at the axis and its label and the fix review's mark sit under it, so incident labels never cross
-    # them.
-    rx = x(_day(key["as_of"]))
-    fixed: tuple[tuple[float, float, int], ...] = ()
-    if wide and key.get("review_on"):
-        fx = x(_day(key["review_on"]))
-        fixed = ((fx - 8, fx + 10 + sk.label_width("Fix review"), 1),)
-    for (cx, y), (lx, anchor), i in zip(*place(key["incidents"], x, rx, width, wide, fixed), key["incidents"], strict=True):
-        parts.append(sk.rule(cx, y + 12, cx, axis, tone=sk.INK))
-        parts.append(sk.tile(cx - 6, y, 12, 12, filled=True, tone=sk.INK))
-        parts.append(sk.label(lx, y + 10, happened(i), anchor=anchor, tone=sk.INK))
-        parts.append(sk.label(lx, y + 24, short(i), anchor=anchor))
-    # The review, and the fix review, where the person who decides makes the call.
-    top = axis + (40 if wide else 64)
-    step = 30.0 if wide else 50.0
-    bottom = top + step * max(len(fixes), 1)
-    if wide:
-        parts.append(sk.rule(rx, 14, rx, bottom - step + 10, tone=sk.LINE3, dashed=True))
-        parts.append(sk.label(rx - 6, 24, "Review", anchor="end", tone=sk.INK2))
-        parts.append(sk.label(rx - 6, 38, key["as_of"], anchor="end"))
-    else:
-        parts.append(sk.rule(rx, axis - 8, rx, bottom - step + 10, tone=sk.LINE3, dashed=True))
-        parts.append(sk.label(rx - 6, axis + 32, "Review", anchor="end", tone=sk.INK2))
-        parts.append(sk.label(rx - 6, axis + 46, key["as_of"], anchor="end"))
-    if key.get("review_on"):
-        fx = x(_day(key["review_on"]))
-        parts.append(sk.person(fx, axis - 3 if wide else axis + 36, size=14))
-        parts.append(sk.label(fx + 10, axis - 20 if wide else axis + 32, "Fix review", tone=sk.BRASS))
-    # One row per fix: its owner in a brass chip, a line from the review to the due date, and the date.
-    for n, f in enumerate(fixes):
-        y = top + step * n
-        if wide:
-            parts.append(sk.label(0, y + 4, f["id"], tone=sk.INK2))
-            parts.append(sk.chip(rx - 12 - sk.chip_width(f["owner"]), y - 9, f["owner"], tone=sk.BRASS))
-            by = y
-        else:
-            parts.append(sk.label(0, y + 4, f["id"], tone=sk.INK2))
-            parts.append(sk.chip(28, y - 9, f["owner"], tone=sk.BRASS))
-            by = y + 22
-        dx = x(_day(f["due"]))
-        parts.append(sk.rule(rx, by, dx, by, tone=sk.INK, width=sk.STROKE))
-        parts.append(sk.point(dx, by, r=4))
-        parts.append(sk.label(dx + 9, by + 4, f["due"], tone=sk.INK2))
-    n = len(key["incidents"])
-    aria = f"{count_word(n)} incident{'' if n == 1 else 's'} from {key['window']['from']} to {key['as_of']}"
-    if key["incidents"]:
-        aria += ": " + "; ".join(f"{happened(i).lower()} on {i['started_at'][:10]}, fixed in {loop.shown(i['time_to_restore'])}" for i in key["incidents"])
-    aria += f". {len(fixes)} fix{'' if len(fixes) == 1 else 'es'}, each with one owner"
-    aria += f", due from {min(f['due'] for f in fixes)} to {max(f['due'] for f in fixes)}." if fixes else "."
-    if key.get("review_on"):
-        aria += f" The fix review is on {key['review_on']}."
-    return sk.frame("".join(parts), label=aria, height=bottom + (4 if wide else 12), width=width, variant=variant)
+def rows(key: dict[str, Any]) -> str:
+    """Incidents, then fixes, as scorecard rows. An incident: what happened, one ink bar for its time to fix scaled to
+    the longest in the frame (there is no plan for time to fix, so no plan bar and no hatching), the time, its severity.
+    A fix: what it does, no picture, its due date as the figure, its one owner in brass."""
+    longest = max([minutes(i["time_to_restore"]) for i in key["incidents"]] or [0])
+    out = []
+    for i in key["incidents"]:
+        f = i["time_to_restore"]
+        out.append(
+            sk.sc_row(
+                happened(i),
+                picture=sk.share_bar(minutes(f), longest),
+                figure=sk.figure_line(loop.shown(f).upper()),
+                word=sk.check_word(i["severity"] or "no severity"),
+            )
+        )
+    if not key["incidents"]:
+        out.append(sk.sc_note("No incidents started in the window."))
+    for f in key["fixes"]:
+        out.append(sk.sc_row(plain(f["fix"]), figure=sk.figure_line(f["due"]), word=sk.person_call(f["owner"])))
+    return sk.sc_frame(
+        out,
+        label=heading(key),
+        title="Time to fix, then fixes",
+        head=["Incident, then fix", "", "Time to fix · due", "Severity · owner"],
+        legend=sk.legend("actual", "time to fix") if key["incidents"] else "",
+        caption=caption(key),
+        illustrative=bool(key["illustrative"]),
+        word_max=220,
+    )
 
 
 # The words
@@ -363,11 +291,11 @@ def lede(key: dict[str, Any]) -> str:
 
 
 def caption(key: dict[str, Any]) -> str:
-    return (
-        f"Time runs left to right from {key['window']['from']}. Ink marks are incidents, with how long each took to fix. "
-        f"The dashed line is this review, {key['as_of']}; each row runs from it to a fix's due date, its owner in brass."
-        + (f" The brass figure marks the fix review, {key['review_on']}." if key.get("review_on") else "")
-    )
+    longest = max(key["incidents"], key=lambda i: minutes(i["time_to_restore"]), default=None)
+    out = ""
+    if longest:
+        out = f"One row per incident since {key['window']['from']}, drawn as its time to fix against the longest, {loop.shown(longest['time_to_restore'])}. "
+    return out + "Then one row per fix, with its due date and its one owner in brass."
 
 
 def evidence(c: dict[str, Any], key: dict[str, Any]) -> str:
@@ -456,7 +384,7 @@ def earlier_rows(key: dict[str, Any]) -> list[tuple[str, str, str, str]]:
 def earlier(key: dict[str, Any]) -> str:
     out = []
     for name, word, text, figs in earlier_rows(key):
-        chip = f'<span class="chip">{e(word)}</span> ' if word else ""
+        chip = f'<span class="wd">{e(word)}</span> ' if word else ""
         out.append(f"<div><dt>{e(name)}</dt><dd>{chip}{e(text)}{' <b>' + e(figs) + '</b>' if figs else ''}</dd></div>")
     return f'<dl class="figs">{"".join(out)}</dl>'
 
@@ -476,7 +404,7 @@ def engineers(key: dict[str, Any]) -> str:
     for r in key["context"]:
         for f in r["figures"] or [None]:
             cells = (e(loop.shown(f)), e(loop.window_text(f)), e(f["source"])) if f else ("none", "", e(r["text"]))
-            ctx.row(("", e(r["label"])), ("mono", e(r["word"] or "")), ("num", cells[0]), ("mo", cells[1]), ("", cells[2]))
+            ctx.row(("", e(r["label"])), ("mono", e(cited(r["word"]))), ("num", cells[0]), ("mo", cells[1]), ("", cells[2]))
     ids = Table(("Incident", "What happened", "Started (UTC)", "Fixed (UTC)"))
     for i in key["incidents"]:
         ids.row(("mono", e(i["id"])), ("", e(happened(i))), ("mo", e(stamp(i["started_at"]))), ("mo", e(stamp(i["restored_at"]))))
@@ -506,13 +434,12 @@ def page(key: dict[str, Any]) -> str:
     b, st, ill = key["brief"], key["landed_status"], key["illustrative"]
     title = f"After-action review: {b['title']}"
     header = sk.page_header("Postmortem", date=f"As of {key['as_of']}", version="v" + key["tool"].rsplit(" ", 1)[-1], illustrative=ill)
-    marks = f'<p class="marks"><span>Project status, from did-it-land {status_mark(st["printed"])}</span><span>Review <span class="chip">{e(key["review"])}</span></span></p>'
-    pic = sk.figure(timeline(key, "wide"), timeline(key, "tall"), caption=caption(key), illustrative=ill)
+    marks = f'<p class="marks"><span>Project status, from did-it-land {status_mark(st["printed"])}</span><span>Review <span class="wd">{e(key["review"])}</span></span></p>'
     step = (
         f'<div class="next"><b>What to do next</b><div><p>{e(next_step(key))}</p>'
         f'<span class="who"><span class="o">{e(b["decides"])}</span><span class="d">{e(key["review_on"] or "not set")}</span></span></div></div>'
     )
-    cover = f'<section class="slide cover">{header}<h1>{e(heading(key))}</h1><p class="lede">{lede(key)}</p>{marks}<div class="panel">{pic}</div>{step}</section>'
+    cover = f'<section class="slide cover">{header}<h1>{e(heading(key))}</h1><p class="lede">{lede(key)}</p>{marks}{rows(key)}{step}</section>'
     first = (
         f'<section class="slide"><div class="meta"><span>What changed, and who fixes it</span></div><p class="say">{e(plain(key["summary"]))}</p><div class="cols">'
         f"<div><h3>What changed</h3>{changes(key)}</div><div><h3>Who fixes it, by when</h3>{fixes(key)}</div></div></section>"
@@ -527,7 +454,7 @@ def page(key: dict[str, Any]) -> str:
     more = f'<section class="slide"><div class="meta"><span>Detail</span></div>{engineers(key)}</section>'
     return (
         '<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        f'<title>{e(title)}</title><style>{floor_fonts(stylesheet() + sk.CSS + PAGE_CSS)}</style></head><body><main class="solo">'
+        f'<title>{e(title)}</title><style>{floor_fonts(stylesheet() + sk.CSS + sk.SCORECARD_CSS + PAGE_CSS)}</style></head><body><main class="solo">'
         f"{cover}{first}{second}{more}"
         '<p class="foot">This review is blameless: it says what the system and the process allowed, not who erred. '
         "The project's status is did-it-land's, printed as it wrote it, never computed here. Every figure is computed in code from the source named.</p>"
@@ -635,7 +562,7 @@ def markdown(key: dict[str, Any]) -> str:
     for r in key["context"]:
         for f in r["figures"] or [None]:
             cells = (loop.shown(f), loop.window_text(f), md(f["source"])) if f else ("none", "", md(r["text"]))
-            w(f"| {r['label']} | {md(r['word'] or '')} | {cells[0]} | {cells[1]} | {cells[2]} |")
+            w(f"| {r['label']} | {md(cited(r['word']))} | {cells[0]} | {cells[1]} | {cells[2]} |")
     w("")
     status = f"printed from `{st['from']}` as {st['computed_by']} wrote it" if st["printed"] else "not read"
     w(f"Status: {status}, never computed here. Review kind: {key['review']}. Window {key['window']['from']} to {key['window']['to']}. Author: {md(key['author'])}.")

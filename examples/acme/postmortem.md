@@ -1,6 +1,6 @@
 # Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.
 
-Postmortem v0.3.1. As of 2026-11-26. Illustrative: Acme is an invented company, and every figure comes from a synthetic fixture.
+Postmortem v0.3.2. As of 2026-11-26. Illustrative: Acme is an invented company, and every figure comes from a synthetic fixture.
 
 Quote drafting is a project you expect to move a number: quote draft acceptance rate, to 40% by 2026-11-15. That target comes from its landing brief, a one-page plan: what good looks like, by when, at what cost. This after-action review is blameless: it says what changed in the system and the process, not who erred.
 
@@ -54,7 +54,7 @@ Target: 40% quote draft acceptance rate by 2026-11-15.
 
 ## For your engineers
 
-Skill: `postmortem` 0.3.1.
+Skill: `postmortem` 0.3.2.
 
 | Incident | What happened |
 |---|---|
@@ -91,7 +91,7 @@ The written parts, as written:
 | 03 Build, cost | over budget | 9,000 tokens per task | 2026-11-01 to 2026-11-14 | landing brief quote-drafting.md |
 | 03 Build, cost | over budget | $0.03376 per task | 2026-11-01 to 2026-11-14 | cost-budget-check 0.3.2: priced cost / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15) |
 | 03 Build, cost | over budget | $0.027 per task | 2026-11-01 to 2026-11-14 | landing brief quote-drafting.md (tokens per task x price per token) |
-| 03 Build, evals | not confirmed: inside noise | 80% | 2026-11-15 | quote-drafting.csv (sha256 ee43a12a2395) |
+| 03 Build, evals | not confirmed: too close to call | 80% | 2026-11-15 | quote-drafting.csv (sha256 ee43a12a2395) |
 | 04 Learn, did-it-land |  | 43% | 2026-09-07 to 2026-11-23 | Illustrative product analytics export, quote\_drafts\_weekly.csv |
 | 04 Learn, did-it-land |  | 41% | 2026-09-07 to 2026-11-09 | Illustrative product analytics export, quote\_drafts\_weekly.csv |
 | 04 Learn, did-it-land |  | 40% | to 2026-11-15 | landing brief: quote-drafting.md |
