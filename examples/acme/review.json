@@ -1,6 +1,7 @@
 {
   "author": "Lead, Quoting squad",
   "review_on": "2026-12-17",
+  "incident_labels": {"2141": "Drafts timed out", "2203": "Price sync lagged"},
   "summary": "Two incidents touched quote drafting after launch. To stop the first, long drafts were sent to a larger model, and that routing stayed in place. It is the main driver of the cost running over the brief's budget in early November. Prices stayed in fixed code throughout, as the brief's line says.",
   "what_changed": [
     {

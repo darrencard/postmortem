@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import datetime as dt
 import html
+import itertools
 import re
 import sys
 from pathlib import Path
@@ -47,16 +48,16 @@ main.solo{margin-left:0}
 .solo h1{font-size:clamp(34px,4.6vw,60px);line-height:1;letter-spacing:-.04em;max-width:22ch;margin-bottom:20px}
 .solo .lede{margin-bottom:24px}
 .solo .lede b{color:var(--t1);font-weight:500}
-.marks{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;margin:0 0 20px;font:400 10px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.marks{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;margin:0 0 20px;font:400 11px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
 .marks>span{display:inline-flex;align-items:center;gap:10px}
-.chip{font:400 10px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t1);border:1px solid var(--line3);border-radius:3px;padding:1px 6px;white-space:nowrap}
+.chip{font:400 11px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t1);border:1px solid var(--line3);border-radius:3px;padding:1px 6px;white-space:nowrap}
 .panel{border:1px solid var(--line);border-radius:12px;background:var(--s1);padding:24px 28px 20px}
 @media (min-width:1100px){.panel .sk{display:grid;grid-template-columns:640px minmax(0,1fr);gap:16px 40px;align-items:center}.panel .sk figcaption{margin-top:0;flex-direction:column;align-items:flex-start}}
 .next{margin-top:28px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:8px 32px;align-items:baseline;border:1px solid var(--brass);border-radius:12px;padding:20px 24px;background:var(--brass-bg)}
-.next>b{font:400 10px/22px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
+.next>b{font:400 11px/22px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
 .next p{margin:0;font-size:16px;line-height:1.5;color:var(--t1)}
 .next .who{display:flex;flex-wrap:wrap;gap:4px 24px;margin-top:10px;font:400 11.5px/16px var(--mono);color:var(--brass)}
-.next .who span::before{font-size:10px;letter-spacing:.1em;color:var(--t3);margin-right:8px}
+.next .who span::before{font-size:11px;letter-spacing:.1em;color:var(--t3);margin-right:8px}
 .next .who .o::before{content:"DECIDES"}.next .who .d::before{content:"ON"}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px 56px;align-items:start}
 .cols h3{margin-bottom:8px}
@@ -69,10 +70,10 @@ main.solo{margin-left:0}
 .items .own{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font:400 11.5px/18px var(--mono)}
 .items .own .o{color:var(--brass)}
 .items .own .d{color:var(--t2)}
-.items .own .d::before{content:"DUE ";font-size:10px;letter-spacing:.1em;color:var(--t3)}
+.items .own .d::before{content:"DUE ";font-size:11px;letter-spacing:.1em;color:var(--t3)}
 .figs{margin:0;display:grid}
 .figs>div{display:grid;grid-template-columns:132px minmax(0,1fr);gap:4px 16px;border-top:1px solid var(--line);padding:11px 0}
-.figs dt{font:400 10px/22px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.figs dt{font:400 11px/22px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
 .figs dd{margin:0;font-size:13.5px;line-height:1.55;color:var(--t2)}
 .figs dd b{color:var(--t1);font-weight:500}
 .tgt{margin:0 0 8px;font-size:13px;color:var(--t2)}
@@ -87,9 +88,20 @@ main.solo{margin-left:0}
 @media (max-width:980px){.foot{padding:24px 16px 48px}.solo .slide.cover{padding-top:24px}.cols,.next{grid-template-columns:1fr}.panel{padding:18px 16px 16px}
 .stack table,.stack tbody,.stack tr,.stack td{display:block}.stack tr:first-child{display:none}.stack tr{padding:10px 16px;border-bottom:1px solid var(--line)}
 .stack td{border:0;padding:3px 0;display:grid;grid-template-columns:118px 1fr;gap:12px}.stack td.num{text-align:left;white-space:normal}
-.stack td::before{content:attr(data-l);font:400 10px/20px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}}
+.stack td::before{content:attr(data-l);font:400 11px/20px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}}
 @media (max-width:560px){.figs>div{grid-template-columns:1fr;gap:0}}
 """
+
+# The smallest text the page prints, at every width. The vendored template and svgkit keep their own sizes on disk
+# (both are hash-pinned); the page raises any smaller size to this one as it inlines their rules.
+FONT_FLOOR = 11
+FONT_SIZE = re.compile(r"(font-size:\s*|font:[^;{}]*?)(\d+(?:\.\d+)?)px")
+
+
+def floor_fonts(css: str) -> str:
+    """Every font size below FONT_FLOOR, raised to it: font-size and the size in a font shorthand."""
+    return FONT_SIZE.sub(lambda m: m.group(1) + (str(FONT_FLOOR) if float(m.group(2)) < FONT_FLOOR else m.group(2)) + "px", css)
+
 
 NUMBER_WORDS = ("No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve")
 
@@ -146,11 +158,11 @@ def fig_plain(f: dict[str, Any], labelled: bool = False) -> str:
     return shown.removesuffix(" per task") if labelled else shown
 
 
-def ref_plain(ref: str, f: dict[str, Any]) -> str:
-    """One piece of evidence, named in plain words."""
+def ref_plain(ref: str, f: dict[str, Any], what: str = "") -> str:
+    """One piece of evidence, named in plain words. An incident is named by what happened, when the team wrote it."""
     kind, _, rest = ref.partition(":")
     if kind == "incident":
-        return f"incident {rest}, fixed in {loop.shown(f)}"
+        return f"{what or 'incident ' + rest}, fixed in {loop.shown(f)}"
     parts = rest.split("/")
     if parts[:2] == ["cost", "lines"] and len(parts) == 4:
         return f"{LINE.get(parts[2], parts[2].replace('_', ' '))}, {PART.get(parts[3], parts[3])}: {fig_plain(f, labelled=True)}"
@@ -180,6 +192,11 @@ def status_mark(status: str | None) -> str:
     return f'<span class="st {e(status)}" data-from="landed">{e(status)}</span>'
 
 
+def happened(i: dict[str, Any]) -> str:
+    """An incident by what happened, as the team wrote it; its id when they did not. The id itself is in the fold."""
+    return i.get("what_happened") or f"Incident {i['id']}"
+
+
 def short(i: dict[str, Any]) -> str:
     """Time to fix, short, for the picture: the figure's own value and a short unit."""
     f = i["time_to_restore"]
@@ -195,6 +212,51 @@ def _day(text: str) -> int:
 
 
 # The signature picture
+
+
+def place(
+    incidents: list[dict[str, Any]], x: Any, rx: float, width: float, wide: bool, fixed: tuple[tuple[float, float, int], ...] = ()
+) -> tuple[list[tuple[float, float]], list[tuple[float, str]]]:
+    """Where each incident's mark and label go: a row above the axis and a side of the mark. Every choice is scored and
+    the cheapest kept: a label off the picture, over another label or across another incident's stem costs most;
+    across the review's line (desktop only, where it runs to the top) costs less. Few incidents, so this is exhaustive;
+    past six it takes each incident's cheapest spot in turn. `fixed` holds other labels already drawn: (from, to, row)."""
+    rows = (44.0, 74.0)
+    xs = [x(_day(i["started_at"])) for i in incidents]
+    widths = [max(sk.label_width(happened(i)), sk.label_width(short(i))) for i in incidents]
+
+    def span(n: int, side: str) -> tuple[float, float]:
+        return (xs[n] - 12 - widths[n], xs[n] - 12) if side == "left" else (xs[n] + 12, xs[n] + 12 + widths[n])
+
+    def cost(choice: list[tuple[int, str]]) -> int:
+        total = 0
+        for n, (row, side) in enumerate(choice):
+            a, b = span(n, side)
+            total += 100 if a < 0 or b > width else 0
+            total += 10 if wide and a - 4 < rx < b + 4 else 0
+            total += 0 if side == "right" else 1
+            total += sum(100 for a2, b2, r2 in fixed if r2 == row and a < b2 + 8 and a2 < b + 8)
+            for m, (row2, side2) in enumerate(choice):
+                if m == n:
+                    continue
+                if row2 == row:
+                    a2, b2 = span(m, side2)
+                    total += 100 if a < b2 + 8 and a2 < b + 8 else 0
+                    total += 100 if a - 8 < xs[m] < b + 8 else 0
+                elif row2 < row and a - 4 < xs[m] < b + 4:  # m's stem runs down through this row
+                    total += 50
+        return total
+
+    options = [(r, side) for r in range(len(rows)) for side in ("right", "left")]
+    if len(incidents) <= 6:
+        best = min(itertools.product(options, repeat=len(incidents)), key=lambda c: cost(list(c)), default=())
+    else:
+        best = []
+        for _ in incidents:
+            best.append(min(options, key=lambda o: cost([*best, o])))
+    marks = [(xs[n], rows[row]) for n, (row, _) in enumerate(best)]
+    labels = [(xs[n] - 12, "end") if side == "left" else (xs[n] + 12, "start") for n, (_, side) in enumerate(best)]
+    return marks, labels
 
 
 def timeline(key: dict[str, Any], variant: str) -> str:
@@ -221,36 +283,35 @@ def timeline(key: dict[str, Any], variant: str) -> str:
         d = (d + dt.timedelta(days=32)).replace(day=1)
     parts.append(sk.deadline(x(lo), 14, axis, tone=sk.LINE3))
     parts.append(sk.label(x(lo) + 6, 24, f"From {key['window']['from']}"))
-    # Incidents: an ink mark on the day it started, its id and time to fix beside it. A label that would cross the
-    # review line sits on the left; one that would touch another drops a row.
+    # Incidents: an ink mark on the day it started, with what happened and its time to fix beside it. On a phone the
+    # review's line starts at the axis and its label and the fix review's mark sit under it, so incident labels never cross
+    # them.
     rx = x(_day(key["as_of"]))
-    placed: list[tuple[int, float, float]] = []
-    for i in key["incidents"]:
-        cx = x(_day(i["started_at"]))
-        w = max(sk.label_width(i["id"]), sk.label_width(short(i)))
-        left = cx < rx < cx + 12 + w + 4
-        span = (cx - 12 - w, cx - 12) if left else (cx + 12, cx + 12 + w)
-        row = next((r for r in range(4) if not any(pr == r and span[0] < b + 8 and a < span[1] + 8 for pr, a, b in placed)), 3)
-        placed.append((row, cx - 6, span[1]) if not left else (row, span[0], cx + 6))
-        y = 44 + row * 30
+    fixed: tuple[tuple[float, float, int], ...] = ()
+    if wide and key.get("review_on"):
+        fx = x(_day(key["review_on"]))
+        fixed = ((fx - 8, fx + 10 + sk.label_width("Fix review"), 1),)
+    for (cx, y), (lx, anchor), i in zip(*place(key["incidents"], x, rx, width, wide, fixed), key["incidents"], strict=True):
         parts.append(sk.rule(cx, y + 12, cx, axis, tone=sk.INK))
         parts.append(sk.tile(cx - 6, y, 12, 12, filled=True, tone=sk.INK))
-        lx, anchor = (cx - 12, "end") if left else (cx + 12, "start")
-        parts.append(sk.label(lx, y + 10, i["id"], anchor=anchor, tone=sk.INK))
+        parts.append(sk.label(lx, y + 10, happened(i), anchor=anchor, tone=sk.INK))
         parts.append(sk.label(lx, y + 24, short(i), anchor=anchor))
     # The review, and the fix review, where the person who decides makes the call.
-    top = axis + 40
+    top = axis + (40 if wide else 64)
     step = 30.0 if wide else 50.0
     bottom = top + step * max(len(fixes), 1)
-    parts.append(sk.rule(rx, 14, rx, bottom - step + 10, tone=sk.LINE3, dashed=True))
-    # The review's label sits left of its line on desktop, right of it on a phone, clear of the window's label.
-    gx, ga = (rx - 6, "end") if wide else (rx + 6, "start")
-    parts.append(sk.label(gx, 24, "Review", anchor=ga, tone=sk.INK2))
-    parts.append(sk.label(gx, 38, key["as_of"], anchor=ga))
+    if wide:
+        parts.append(sk.rule(rx, 14, rx, bottom - step + 10, tone=sk.LINE3, dashed=True))
+        parts.append(sk.label(rx - 6, 24, "Review", anchor="end", tone=sk.INK2))
+        parts.append(sk.label(rx - 6, 38, key["as_of"], anchor="end"))
+    else:
+        parts.append(sk.rule(rx, axis - 8, rx, bottom - step + 10, tone=sk.LINE3, dashed=True))
+        parts.append(sk.label(rx - 6, axis + 32, "Review", anchor="end", tone=sk.INK2))
+        parts.append(sk.label(rx - 6, axis + 46, key["as_of"], anchor="end"))
     if key.get("review_on"):
         fx = x(_day(key["review_on"]))
-        parts.append(sk.person(fx, axis - 3, size=14))
-        parts.append(sk.label(fx + 10, axis - 20, "Fix review", tone=sk.BRASS))
+        parts.append(sk.person(fx, axis - 3 if wide else axis + 36, size=14))
+        parts.append(sk.label(fx + 10, axis - 20 if wide else axis + 32, "Fix review", tone=sk.BRASS))
     # One row per fix: its owner in a brass chip, a line from the review to the due date, and the date.
     for n, f in enumerate(fixes):
         y = top + step * n
@@ -269,7 +330,7 @@ def timeline(key: dict[str, Any], variant: str) -> str:
     n = len(key["incidents"])
     aria = f"{count_word(n)} incident{'' if n == 1 else 's'} from {key['window']['from']} to {key['as_of']}"
     if key["incidents"]:
-        aria += ": " + "; ".join(f"{i['id']} on {i['started_at'][:10]}, fixed in {loop.shown(i['time_to_restore'])}" for i in key["incidents"])
+        aria += ": " + "; ".join(f"{happened(i).lower()} on {i['started_at'][:10]}, fixed in {loop.shown(i['time_to_restore'])}" for i in key["incidents"])
     aria += f". {len(fixes)} fix{'' if len(fixes) == 1 else 'es'}, each with one owner"
     aria += f", due from {min(f['due'] for f in fixes)} to {max(f['due'] for f in fixes)}." if fixes else "."
     if key.get("review_on"):
@@ -308,14 +369,15 @@ def caption(key: dict[str, Any]) -> str:
     )
 
 
-def evidence(c: dict[str, Any]) -> str:
-    return "; ".join(ref_plain(ref, f) for ref, f in c["cited"].items())
+def evidence(c: dict[str, Any], key: dict[str, Any]) -> str:
+    what = {f"incident:{i['id']}": happened(i).lower() for i in key["incidents"] if i.get("what_happened")}
+    return "; ".join(ref_plain(ref, f, what.get(ref, "")) for ref, f in c["cited"].items())
 
 
 def changes(key: dict[str, Any]) -> str:
     items = []
     for c in key["what_changed"]:
-        ev = evidence(c)
+        ev = evidence(c, key)
         why = f"<small>Evidence: {e(ev)}.</small>" if ev else ""
         items.append(f'<li><span class="id">{e(c["id"])}</span><span><p>{e(plain(c["change"]))}</p>{why}</span></li>')
     return f'<ul class="items">{"".join(items)}</ul>'
@@ -354,10 +416,10 @@ class Table:
 def incidents(key: dict[str, Any]) -> str:
     if not key["incidents"]:
         return "<p>No incidents started in the window.</p>"
-    tab = Table(("Incident", "Severity", "Started (UTC)", "Time to fix"))
+    tab = Table(("What happened", "Severity", "Started (UTC)", "Time to fix"))
     for i in key["incidents"]:
         tab.row(
-            ("", e(i["id"])),
+            ("", e(happened(i))),
             ("", e(i["severity"] or "not set")),
             ("mo", e(stamp(i["started_at"]))),
             ("num", e(loop.shown(i["time_to_restore"]))),
@@ -414,6 +476,9 @@ def engineers(key: dict[str, Any]) -> str:
         for f in r["figures"] or [None]:
             cells = (e(loop.shown(f)), e(loop.window_text(f)), e(f["source"])) if f else ("none", "", e(r["text"]))
             ctx.row(("", e(r["label"])), ("mono", e(r["word"] or "")), ("num", cells[0]), ("mo", cells[1]), ("", cells[2]))
+    ids = Table(("Incident", "What happened", "Started (UTC)", "Fixed (UTC)"))
+    for i in key["incidents"]:
+        ids.row(("mono", e(i["id"])), ("", e(happened(i))), ("mo", e(stamp(i["started_at"]))), ("mo", e(stamp(i["restored_at"]))))
     written = "".join(f"<li>{e(c['id'])}: {e(c['change'])}</li>" for c in key["what_changed"])
     written += "".join(f"<li>{e(f['id'])} ({e(f.get('kind') or 'fix')}): {e(f['fix'])} Done when: {e(f['done_when'])}</li>" for f in key["fixes"])
     status = f"printed from <code>{e(st['from'])}</code> as {e(st['computed_by'])} wrote it" if st["printed"] else "not read"
@@ -423,9 +488,10 @@ def engineers(key: dict[str, Any]) -> str:
         "<p>The review adds its page to the project file: the <code>postmortem</code> key of <code>landing/&lt;bet&gt;.json</code>, and no other key. "
         "With --csv it also writes the fixes for a tracker import.</p>"
     )
-    body = f"<p>The written parts, as written:</p><ul>{written}</ul>{ev.html()}{ctx.html()}{notes}"
+    skill = f"<p>Skill: <code>postmortem</code> {e(key['tool'].rsplit(' ', 1)[-1])}.</p>"
+    body = f"{skill}<p>The written parts, as written:</p><ul>{written}</ul>{ids.html() if key['incidents'] else ''}{ev.html()}{ctx.html()}{notes}"
     if not key["brief_unchanged"]:
-        body = "<p>The landing brief changed after the record opened. This review reads it as it is now.</p>" + body
+        body = "<p>The landing brief changed after the project file opened. This review reads it as it is now.</p>" + body
     return fold("For your engineers", body)
 
 
@@ -438,7 +504,7 @@ def next_step(key: dict[str, Any]) -> str:
 def page(key: dict[str, Any]) -> str:
     b, st, ill = key["brief"], key["landed_status"], key["illustrative"]
     title = f"After-action review: {b['title']}"
-    header = sk.page_header("postmortem", date=f"As of {key['as_of']}", version="v" + key["tool"].rsplit(" ", 1)[-1], illustrative=ill)
+    header = sk.page_header("Postmortem", date=f"As of {key['as_of']}", version="v" + key["tool"].rsplit(" ", 1)[-1], illustrative=ill)
     marks = f'<p class="marks"><span>Project status, from did-it-land {status_mark(st["printed"])}</span><span>Review <span class="chip">{e(key["review"])}</span></span></p>'
     pic = sk.figure(timeline(key, "wide"), timeline(key, "tall"), caption=caption(key), illustrative=ill)
     step = (
@@ -453,14 +519,14 @@ def page(key: dict[str, Any]) -> str:
     well = "".join(f'<li><span class="id">+</span><span><p>{e(plain(t))}</p></span></li>' for t in key["what_went_well"])
     well_html = f'<h3 style="margin-top:28px">What went well</h3><ul class="items">{well}</ul>' if well else ""
     second = (
-        '<section class="slide"><div class="meta"><span>The record</span></div><div class="cols">'
+        '<section class="slide"><div class="meta"><span>The incidents, and the earlier steps</span></div><div class="cols">'
         f"<div><h3>Incidents ({e(key['figures']['incidents']['value'])})</h3>{incidents(key)}{well_html}</div>"
         f'<div><h3>What the earlier steps found</h3><p class="tgt">Target: {e(b["bar"])} {e(b["metric"].lower())} by {e(b["by"])}.</p>{earlier(key)}</div></div></section>'
     )
     more = f'<section class="slide"><div class="meta"><span>Detail</span></div>{engineers(key)}</section>'
     return (
         '<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        f'<title>{e(title)}</title><style>{stylesheet()}{sk.CSS}{PAGE_CSS}</style></head><body><main class="solo">'
+        f'<title>{e(title)}</title><style>{floor_fonts(stylesheet() + sk.CSS + PAGE_CSS)}</style></head><body><main class="solo">'
         f"{cover}{first}{second}{more}"
         '<p class="foot">This review is blameless: it says what the system and the process allowed, not who erred. '
         "The project's status is did-it-land's, printed as it wrote it, never computed here. Every figure is computed in code from the source named.</p>"
@@ -490,7 +556,7 @@ def markdown(key: dict[str, Any]) -> str:
     w(f"# {md(heading(key))}")
     w("")
     ill = " Illustrative: Acme is an invented company, and every figure comes from a synthetic fixture." if key["illustrative"] else ""
-    w(f"postmortem v{key['tool'].rsplit(' ', 1)[-1]}. As of {key['as_of']}.{ill}")
+    w(f"Postmortem v{key['tool'].rsplit(' ', 1)[-1]}. As of {key['as_of']}.{ill}")
     w("")
     w(md(_text(lede(key))))
     w("")
@@ -507,7 +573,7 @@ def markdown(key: dict[str, Any]) -> str:
     w("### What changed")
     w("")
     for c in key["what_changed"]:
-        ev = evidence(c)
+        ev = evidence(c, key)
         w(f"- **{md(c['id'])}.** {md(plain(c['change']))}" + (f" Evidence: {md(ev)}." if ev else ""))
     w("")
     w("### Who fixes it, by when")
@@ -520,10 +586,10 @@ def markdown(key: dict[str, Any]) -> str:
     w(f"## Incidents: {loop.shown(key['figures']['incidents'])}")
     w("")
     if key["incidents"]:
-        w("| Incident | Severity | Started (UTC) | Fixed (UTC) | Time to fix |")
+        w("| What happened | Severity | Started (UTC) | Fixed (UTC) | Time to fix |")
         w("|---|---|---|---|---|")
         for i in key["incidents"]:
-            w(f"| {md(i['id'])} | {md(i['severity'] or 'not set')} | {stamp(i['started_at'])} | {stamp(i['restored_at'])} | {loop.shown(i['time_to_restore'])} |")
+            w(f"| {md(happened(i))} | {md(i['severity'] or 'not set')} | {stamp(i['started_at'])} | {stamp(i['restored_at'])} | {loop.shown(i['time_to_restore'])} |")
     else:
         w("No incidents started in the window.")
     w("")
@@ -542,6 +608,14 @@ def markdown(key: dict[str, Any]) -> str:
     w("")
     w("## For your engineers")
     w("")
+    w(f"Skill: `postmortem` {key['tool'].rsplit(' ', 1)[-1]}.")
+    w("")
+    if key["incidents"]:
+        w("| Incident | What happened |")
+        w("|---|---|")
+        for i in key["incidents"]:
+            w(f"| {md(i['id'])} | {md(happened(i))} |")
+        w("")
     w("The written parts, as written:")
     w("")
     for c in key["what_changed"]:
@@ -572,5 +646,5 @@ def markdown(key: dict[str, Any]) -> str:
     w("The review adds its page to the project file: the `postmortem` key of `landing/<bet>.json`, and no other key.")
     if not key["brief_unchanged"]:
         w("")
-        w("The landing brief changed after the record opened. This review reads it as it is now.")
+        w("The landing brief changed after the project file opened. This review reads it as it is now.")
     return "\n".join(out) + "\n"

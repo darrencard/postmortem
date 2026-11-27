@@ -376,7 +376,10 @@ class Visual(unittest.TestCase):
         for svg in visuals:
             drawn = svgkit.texts_in(svg)
             for i in self.key["incidents"]:
-                self.assertIn(i["id"], drawn)
+                # Each incident is labelled by what happened; its number is in the engineers' fold.
+                self.assertIn(i["what_happened"].upper(), drawn)
+                self.assertNotIn(i["id"], drawn)
+                self.assertIn(i["id"], svgkit.page_text(self.page.split("For your engineers", 1)[1]))
                 self.assertIn(f"{i['time_to_restore']['value']} MIN", drawn)
                 self.assertIn(loop.shown(i["time_to_restore"]).upper(), text)
             for f in self.key["fixes"]:
@@ -400,7 +403,7 @@ class Visual(unittest.TestCase):
         for label in labels:
             self.assertEqual(
                 label,
-                "Two incidents from 2026-09-07 to 2026-11-26: 2141 on 2026-10-30, fixed in 72 minutes; 2203 on 2026-11-18, fixed in 22 minutes. "
+                "Two incidents from 2026-09-07 to 2026-11-26: drafts timed out on 2026-10-30, fixed in 72 minutes; price sync lagged on 2026-11-18, fixed in 22 minutes. "
                 "4 fixes, each with one owner, due from 2026-12-10 to 2027-01-08. The fix review is on 2026-12-17.",
             )
 
@@ -410,6 +413,8 @@ class Visual(unittest.TestCase):
         for text in (public, md):
             for word in ("vendor-a/xl", "tokens per task", "eval run", "eval target", "time to restore", "postmortem:", " bet ", " bar ", ".json", "the prd", "inside noise"):
                 self.assertNotIn(word, text)
+            # The words a reader outside the loop does not know, as whole words.
+            self.assertEqual(re.findall(r"\b(records?|bets?|the bar|prds?|arr|tokens?)\b", text), [])
             self.assertIn("the large model", text)
             self.assertIn("after-action review", text)
             self.assertIn("time to fix", text)
@@ -425,9 +430,44 @@ class Visual(unittest.TestCase):
         self.assertIn("<h1>Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.</h1>", body)
         self.assertEqual(body.count('<div class="next">'), 1, "one next step leads the page")
         self.assertIn('<span class="o">Head of Product, Quoting squad</span><span class="d">2026-12-17</span>', body)
-        self.assertIn("<span>postmortem</span><span>As of 2026-11-26</span><span>v0.3.1</span>", body)
+        self.assertIn("<span>Postmortem</span><span>As of 2026-11-26</span><span>v0.3.1</span>", body)
         self.assertNotIn("Book a call", body, "a sample is the skill's own output: no call to action")
         self.assertTrue(self.md.startswith("# Quote drafting had two incidents since 2026-09-07."))
+
+    def test_incident_labels_do_not_touch_each_other_or_the_lines(self):
+        for svg in svgkit.visuals_in(self.page):
+            width = float(re.search(r'viewBox="0 0 ([\d.]+)', svg).group(1))
+            boxes = []
+            for x, y, anchor, text in re.findall(r'<text x="([\d.]+)" y="([\d.]+)" class="sk-l"(?: text-anchor="(\w+)")?[^>]*>([^<]*)<', svg):
+                w = svgkit.label_width(text)
+                a = float(x) - (w if anchor == "end" else 0)
+                boxes.append((a, a + w, float(y) - 9, float(y), text))
+            for a, b, _top, _bottom, text in boxes:
+                self.assertGreaterEqual(a, 0, text)
+                self.assertLessEqual(b, width, text)
+            stems = [(float(x), float(y1), float(y2)) for x, y1, y2 in re.findall(r'<line x1="([\d.]+)" y1="([\d.]+)" x2="\1" y2="([\d.]+)" stroke="var\(--(?:t1|line3)\)"', svg)]
+            for i in self.key["incidents"]:
+                box = next(b for b in boxes if b[4] == i["what_happened"].upper())
+                for other in boxes:
+                    if other is not box:
+                        self.assertFalse(box[0] < other[1] and other[0] < box[1] and box[2] < other[3] and other[2] < box[3], (box, other))
+                for x, y1, y2 in stems:
+                    self.assertFalse(box[0] < x < box[1] and min(y1, y2) < box[3] and box[2] < max(y1, y2), (box, x))
+
+    def test_no_text_smaller_than_11px_at_any_width(self):
+        css = " ".join(re.findall(r"<style>(.*?)</style>", self.page, re.S) + re.findall(r'style="([^"]*)"', self.page))
+        sizes = [float(m) for m in re.findall(r"(?:font-size:\s*|font:[^;{}]*?)(\d+(?:\.\d+)?)px", css)]
+        sizes += [float(m) for m in re.findall(r'font-size="(\d+(?:\.\d+)?)"', self.page)]
+        self.assertTrue(sizes)
+        self.assertGreaterEqual(min(sizes), 11)
+        # The vendored template is untouched on disk: the page raises its small sizes as it inlines them.
+        self.assertIn("font:400 10px/16px", (SKILL / "assets" / "vendor" / "template.html").read_text(encoding="utf-8"))
+
+    def test_header_prints_the_plain_name_and_the_fold_the_code_name(self):
+        header = re.search(r'<header class="sk-hdr">.*?</header>', self.page, re.S).group(0)
+        self.assertIn("<span>Postmortem</span>", header)
+        self.assertIn("<code>postmortem</code>", self.page.split("For your engineers", 1)[1])
+        self.assertTrue(self.md.startswith("# ") and "\nPostmortem v" in self.md)
 
     def test_markdown_twin_is_written_by_the_page_module(self):
         self.assertEqual(render_html.markdown(self.key), self.md)

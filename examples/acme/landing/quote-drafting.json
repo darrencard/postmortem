@@ -794,7 +794,8 @@
             "to": "2026-10-30T15:17:00+00:00"
           },
           "as_of": "2026-11-26"
-        }
+        },
+        "what_happened": "Drafts timed out"
       },
       {
         "id": "2203",
@@ -810,7 +811,8 @@
             "to": "2026-11-18T10:02:00+00:00"
           },
           "as_of": "2026-11-26"
-        }
+        },
+        "what_happened": "Price sync lagged"
       }
     ],
     "context": [

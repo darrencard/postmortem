@@ -12,7 +12,8 @@ Inputs:
   record     the bet's landing/<bet>.json. Read: the brief it names, and portfolio, spec, cost, evals and landed.
   incidents  run/data/incidents.json, as the Leader Report's collectors write it: from_pagerduty.py or
              from_incidentio.py (live first), or collect.py incidents --csv (the fallback).
-  review     the written parts: author, review_on, summary, what_changed, what_went_well, fixes (see SKILL.md).
+  review     the written parts: author, review_on, summary, what_changed, what_went_well, fixes, and optionally
+             incident_labels, a few words per incident id saying what happened (see SKILL.md).
 
 What it writes: the record's `postmortem` key, and nothing else in the record. One HTML page in the Leader Report
 style and its Markdown twin, and with --csv the fixes for a tracker import.
@@ -215,6 +216,9 @@ def prose(review: dict[str, Any]) -> list[tuple[str, str]]:
         out.append((f"what_changed[{i}]", str(c.get("change") or "")))
     for i, t in enumerate(review.get("what_went_well") or []):
         out.append((f"what_went_well[{i}]", str(t or "")))
+    labels = review.get("incident_labels") if isinstance(review.get("incident_labels"), dict) else {}
+    for k, t in labels.items():
+        out.append((f"incident_labels[{k}]", str(t or "")))
     for i, f in enumerate(review.get("fixes") or []):
         out.append((f"fixes[{i}]", str(f.get("fix") or "")))
         out.append((f"fixes[{i}].done_when", str(f.get("done_when") or "")))
@@ -356,6 +360,10 @@ def build(args: argparse.Namespace) -> tuple[Path, dict[str, Any], dict[str, Any
         raise Refused("review: no ship date in landed and no --from. Pass --from YYYY-MM-DD, the day the review window opens.")
     window = (lo, args.as_of)
     incidents, count, _ = incidents_in(read_incidents(args), lo, args.as_of, args.as_of)
+    # What happened, in a few words the team writes, labels each incident on the page; its id moves to the fold.
+    labels = review.get("incident_labels") if isinstance(review.get("incident_labels"), dict) else {}
+    for i in incidents:
+        i["what_happened"] = str(labels.get(i["id"]) or "").strip()
     changes = []
     for c in review.get("what_changed") or []:
         cited = {}

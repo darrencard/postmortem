@@ -1,6 +1,6 @@
 # Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.
 
-postmortem v0.3.1. As of 2026-11-26. Illustrative: Acme is an invented company, and every figure comes from a synthetic fixture.
+Postmortem v0.3.1. As of 2026-11-26. Illustrative: Acme is an invented company, and every figure comes from a synthetic fixture.
 
 Quote drafting is a project you expect to move a number: quote draft acceptance rate, to 40% by 2026-11-15. That target comes from its landing brief, a one-page plan: what good looks like, by when, at what cost. This after-action review is blameless: it says what changed in the system and the process, not who erred.
 
@@ -16,10 +16,10 @@ Two incidents touched quote drafting after launch. To stop the first, long draft
 
 ### What changed
 
-- **c1.** Long drafts now go to a larger model. The routing was added to stop the timeouts in incident 2141 and had no end date, so it stayed after the incident closed. Evidence: incident 2141, fixed in 72 minutes; cost over budget from that model: $0.96.
+- **c1.** Long drafts now go to a larger model. The routing was added to stop the timeouts in incident 2141 and had no end date, so it stayed after the incident closed. Evidence: drafts timed out, fixed in 72 minutes; cost over budget from that model: $0.96.
 - **c2.** AI usage per task rose past the landing brief's budget once the routing was in place. Evidence: AI usage per task, before: 8,400 units; AI usage per task, actual: 10,300 units; AI usage per task, budget: 9,000 units.
 - **c3.** The quality test checks quality only. Version 1.4 met its quality target while cost per task ran over budget, and nothing put the two side by side before ship. Evidence: pass rate on test cases kept back, version 1.4: 80%; cost per task, actual: $0.03376.
-- **c4.** When the price book sync lagged, drafts showed price pending. No draft priced a job itself, because prices come from the price book in fixed code. Evidence: incident 2203, fixed in 22 minutes.
+- **c4.** When the price book sync lagged, drafts showed price pending. No draft priced a job itself, because prices come from the price book in fixed code. Evidence: price sync lagged, fixed in 22 minutes.
 
 ### Who fixes it, by when
 
@@ -32,10 +32,10 @@ Two incidents touched quote drafting after launch. To stop the first, long draft
 
 ## Incidents: 2 incidents
 
-| Incident | Severity | Started (UTC) | Fixed (UTC) | Time to fix |
+| What happened | Severity | Started (UTC) | Fixed (UTC) | Time to fix |
 |---|---|---|---|---|
-| 2141 | P2 | 2026-10-30 14:05 | 2026-10-30 15:17 | 72 minutes |
-| 2203 | P3 | 2026-11-18 09:40 | 2026-11-18 10:02 | 22 minutes |
+| Drafts timed out | P2 | 2026-10-30 14:05 | 2026-10-30 15:17 | 72 minutes |
+| Price sync lagged | P3 | 2026-11-18 09:40 | 2026-11-18 10:02 | 22 minutes |
 
 ## What went well
 
@@ -53,6 +53,13 @@ Target: 40% quote draft acceptance rate by 2026-11-15.
 - **Did it land:** did-it-land's read: now, at the date, and the target. now 43%, on the due date 41%, target 40%
 
 ## For your engineers
+
+Skill: `postmortem` 0.3.1.
+
+| Incident | What happened |
+|---|---|
+| 2141 | Drafts timed out |
+| 2203 | Price sync lagged |
 
 The written parts, as written:
 

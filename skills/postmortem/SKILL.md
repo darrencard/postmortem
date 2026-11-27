@@ -50,6 +50,7 @@ Write `review.json` with the user:
 - `author`, `review_on` (the day the team checks the fixes were done), `summary` (3 or 4 sentences).
 - `what_changed`: each `{id, change, evidence}`. Evidence is `record:<key>/<path to a figure>` (for example `record:cost/lines/tokens_per_task/actual`) or `incident:<id>`. Code prints each cited figure with its source and window; you never retype it.
 - `what_went_well`: a short list.
+- `incident_labels` (optional): a few words per incident id saying what happened, for example `{"2141": "Drafts timed out"}`. The page labels each incident with them and keeps the id for the engineers' fold.
 - `fixes`: each `{id, fix, done_when, owner, due, addresses, kind}`. `addresses` lists change ids; `kind` is prevent, detect, mitigate or process. 8 or fewer.
 
 A number in your prose must be one the page prints (a cited figure, an incident id) or a date in the window. Ask the user for each owner and due date.
