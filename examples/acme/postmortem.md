@@ -19,7 +19,7 @@ Bar: 40% Quote draft acceptance rate by 2026-11-15.
 | 01 Decide | Brief score at the portfolio review. | 14 points of 14 (briefs/quote-drafting.md, 2026-07-27) |
 | 02 Spec | hold. spec-auditor's verdict on the PRD. | 2 findings (spec-auditor 0.3.1, audit of examples/acme/specs/quote-drafting.md, 2026-08-03) |
 | 03 Build, cost | over budget. cost-budget-check, actual against the brief's budget. | 10,300 tokens per task (cost-budget-check 0.3.1: tokens / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15), 2026-11-01 to 2026-11-14); 9,000 tokens per task (landing brief quote-drafting.md, 2026-11-01 to 2026-11-14); $0.03376 per task (cost-budget-check 0.3.1: priced cost / tasks; distinct task ids in gateway.jsonl; gateway.jsonl; pricing.json (Illustrative prices for the Acme sample. Not any provider's list price., retrieved 2026-10-15), 2026-11-01 to 2026-11-14); $0.027 per task (landing brief quote-drafting.md (tokens per task x price per token), 2026-11-01 to 2026-11-14) |
-| 03 Build, evals | meets target. eval-kit, held-out pass rate for v1.4. | 80% (quote-drafting.csv (sha256 ee43a12a2395), 2026-11-15) |
+| 03 Build, evals | not confirmed: inside noise. eval-kit, held-out pass rate for v1.4. | 80% (quote-drafting.csv (sha256 ee43a12a2395), 2026-11-15) |
 | 04 Learn, did-it-land | did-it-land's read: now, at the date, and the bar. | 43% (Illustrative product analytics export, quote\_drafts\_weekly.csv, 2026-09-07 to 2026-11-23); 41% (Illustrative product analytics export, quote\_drafts\_weekly.csv, 2026-09-07 to 2026-11-09); 40% (landing brief: quote-drafting.md, to 2026-11-15) |
 
 ## Incidents in the window: 2 incidents

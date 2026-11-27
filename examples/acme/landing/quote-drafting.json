@@ -432,10 +432,10 @@
     "feature": "Quote drafting",
     "version": "v1.4",
     "as_of": "2026-11-15",
-    "status": "meets target",
+    "status": "not confirmed: inside noise",
     "blocking": false,
     "reasons": [
-      "held-out pass rate 80% meets the 80% target on a sealed holdout"
+      "held-out pass rate 80% meets the 80% target only as a point estimate: 24 of 30 has a 95% interval of 62.7% to 90.5%, which reaches under it; a rate exactly at the target never clears it, however many cases, so it needs a rate above 80%"
     ],
     "against_brief": {
       "metric": "Quote draft acceptance rate",
@@ -659,7 +659,7 @@
         "as_of": "2026-11-26T09:00:00Z"
       },
       "baseline_mean": {
-        "value": 22.17,
+        "value": 21.67,
         "unit": "%",
         "source": "Illustrative product analytics export, quote_drafts_weekly.csv",
         "window": {
@@ -669,7 +669,7 @@
         "as_of": "2026-11-26T09:00:00Z"
       },
       "baseline_sd": {
-        "value": 0.75,
+        "value": 3.83,
         "unit": "%",
         "source": "Illustrative product analytics export, quote_drafts_weekly.csv",
         "window": {
@@ -679,7 +679,7 @@
         "as_of": "2026-11-26T09:00:00Z"
       },
       "move_z": {
-        "value": 25.02,
+        "value": 5.05,
         "unit": "sd",
         "source": "computed from Illustrative product analytics export, quote_drafts_weekly.csv",
         "window": {
@@ -709,9 +709,19 @@
         "as_of": "2026-11-26T09:00:00Z"
       }
     },
-    "flags": [],
-    "next_step": "Keep the metric on the scorecard, and decide whether to scale the bet.",
-    "decides": "Head of Product, Quoting squad"
+    "flags": [
+      {
+        "code": "over-cost-budget",
+        "text": "Cost is over budget, cited from cost-budget-check 0.3.1. It does not change the status."
+      }
+    ],
+    "next_step": "Keep the metric on the scorecard, and decide whether to scale the bet, given cost is over budget.",
+    "next_step_due": "2026-12-10",
+    "decides": "Head of Product, Quoting squad",
+    "cost_check": {
+      "budget_status": "over budget",
+      "cited_from": "cost-budget-check 0.3.1"
+    }
   },
   "postmortem": {
     "tool": "postmortem 0.3.0",
@@ -891,7 +901,7 @@
       {
         "key": "evals",
         "label": "03 Build, evals",
-        "word": "meets target",
+        "word": "not confirmed: inside noise",
         "text": "eval-kit, held-out pass rate for v1.4.",
         "figures": [
           {
