@@ -170,10 +170,7 @@ def render_written(w, timeline: dict, draft: dict) -> None:
     w("|---|---|---|---|---|---|---|")
     for a in draft["action_items"]:
         addresses = ", ".join(map(str, a["addresses"]))
-        w(
-            f"| {esc(a['id'])} | {esc(a['action'])} | {esc(a.get('done_when'))} | {esc(a.get('kind', ''))} "
-            f"| {esc(a['owner'])} | {esc(a['due'])} | {esc(addresses)} |"
-        )
+        w(f"| {esc(a['id'])} | {esc(a['action'])} | {esc(a.get('done_when'))} | {esc(a.get('kind', ''))} | {esc(a['owner'])} | {esc(a['due'])} | {esc(addresses)} |")
     w("")
 
 

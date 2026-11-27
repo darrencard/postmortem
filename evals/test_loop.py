@@ -1,0 +1,309 @@
+"""Tests for step 04 of the Landing Loop: the bet review, on the Acme quote-drafting record (illustrative).
+
+Run: python3 -m unittest discover -s evals -v   (pytest runs them too)
+"""
+
+from __future__ import annotations
+
+import contextlib
+import copy
+import hashlib
+import io
+import json
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import tomllib
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SKILL = ROOT / "skills" / "postmortem"
+ACME = ROOT / "examples" / "acme"
+LOOP_RECORD = Path.home() / "landing-loop" / "examples" / "acme" / "landing" / "quote-drafting.json"
+sys.path.insert(0, str(SKILL / "scripts"))
+sys.path.insert(0, str(ROOT / "examples" / "acme"))
+
+import loop  # noqa: E402
+import review  # noqa: E402
+import sample  # noqa: E402
+
+VERSION = "0.3.0"
+
+
+def dumps(v: object) -> str:
+    return json.dumps(v, indent=2, ensure_ascii=False)
+
+
+def run_sample() -> Path:
+    out = Path(tempfile.mkdtemp())
+    with contextlib.redirect_stdout(io.StringIO()):
+        assert sample.main(["--into", str(out)]) == 0  # noqa: S101
+    return out
+
+
+def figures(node: object, path: str = ""):
+    """Every dict that has a value and a unit, with its path."""
+    if isinstance(node, dict):
+        if "value" in node and "unit" in node:
+            yield path, node
+        for k, v in node.items():
+            yield from figures(v, f"{path}/{k}")
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            yield from figures(v, f"{path}/{i}")
+
+
+class Setup:
+    """A working folder with the brief, the upstream record and the collected incidents, ready for review.main."""
+
+    def make(self, record: dict | None = None, review_doc: dict | None = None) -> Path:
+        tmp = Path(tempfile.mkdtemp())
+        (tmp / "briefs").mkdir()
+        (tmp / "landing").mkdir()
+        shutil.copy(ACME / "briefs" / "quote-drafting.md", tmp / "briefs" / "quote-drafting.md")
+        rec = record if record is not None else json.loads((ACME / "upstream" / "quote-drafting.json").read_text(encoding="utf-8"))
+        (tmp / "landing" / "quote-drafting.json").write_text(dumps(rec) + "\n", encoding="utf-8")
+        doc = review_doc if review_doc is not None else json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        (tmp / "review.json").write_text(dumps(doc), encoding="utf-8")
+        return tmp
+
+    def args(self, tmp: Path, *extra: str) -> list[str]:
+        return [
+            "--record", str(tmp / "landing" / "quote-drafting.json"),
+            "--incidents-csv", str(ACME / "incidents" / "incidents.csv"),
+            "--system", "Illustrative incident export",
+            "--review", str(tmp / "review.json"),
+            "--as-of", "2026-11-26",
+            *extra,
+        ]  # fmt: skip
+
+    def go(self, tmp: Path, *extra: str) -> tuple[int, str]:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = review.main(self.args(tmp, *extra))
+        return code, buf.getvalue()
+
+
+class Record(unittest.TestCase, Setup):
+    def test_writes_only_its_own_key_and_keeps_read_keys_byte_identical(self):
+        before = json.loads((ACME / "upstream" / "quote-drafting.json").read_text(encoding="utf-8"))
+        after = json.loads((ACME / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))
+        self.assertEqual(list(after), [*before, "postmortem"])
+        for k, v in before.items():
+            self.assertEqual(dumps(after[k]), dumps(v), k)
+
+    def test_upstream_is_the_landing_loop_record_filtered(self):
+        up = (ACME / "upstream" / "quote-drafting.json").read_text(encoding="utf-8")
+        if LOOP_RECORD.exists():
+            self.assertEqual(up, dumps(loop.upstream(json.loads(LOOP_RECORD.read_text(encoding="utf-8")))) + "\n")
+        self.assertEqual(set(json.loads(up)) - {"schema", "bet", "brief"}, set(loop.READS))
+
+    def test_brief_is_the_canonical_one(self):
+        rec = json.loads((ACME / "upstream" / "quote-drafting.json").read_text(encoding="utf-8"))
+        digest = hashlib.sha256((ACME / "briefs" / "quote-drafting.md").read_bytes()).hexdigest()
+        self.assertEqual(digest, rec["brief"]["sha256"])
+
+    def test_keys_it_does_not_read_are_kept_and_never_cited(self):
+        rec = json.loads((ACME / "upstream" / "quote-drafting.json").read_text(encoding="utf-8"))
+        rec["signals"] = {"note": "written by another step", "n": 1.10}
+        doc = json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        tmp = self.make(rec)
+        self.assertEqual(self.go(tmp)[0], 0)
+        after = json.loads((tmp / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))
+        self.assertEqual(dumps(after["signals"]), dumps(rec["signals"]))
+        doc["what_changed"][0]["evidence"] = ["record:signals/n"]
+        code, out = self.go(self.make(rec, doc))
+        self.assertEqual(code, 1)
+        self.assertIn("evidence-not-read", out)
+
+    def test_refused_run_writes_nothing(self):
+        doc = json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        doc["fixes"][0]["owner"] = "the team"
+        tmp = self.make(review_doc=doc)
+        before = (tmp / "landing" / "quote-drafting.json").read_bytes()
+        code, out = self.go(tmp, "--html", str(tmp / "p.html"))
+        self.assertEqual(code, 1)
+        self.assertIn("fix-no-owner", out)
+        self.assertEqual((tmp / "landing" / "quote-drafting.json").read_bytes(), before)
+        self.assertFalse((tmp / "p.html").exists())
+
+
+class Sample(unittest.TestCase):
+    def test_sample_reproduces_byte_for_byte(self):
+        out = run_sample()
+        for name in ("postmortem.html", "postmortem.md", "landing/quote-drafting.json"):
+            self.assertEqual((out / name).read_bytes(), (ACME / name).read_bytes(), name)
+
+    def test_sample_runs_on_a_fresh_interpreter_in_under_a_minute(self):
+        out = tempfile.mkdtemp()
+        done = subprocess.run([sys.executable, str(ACME / "sample.py"), "--into", out], capture_output=True, text=True, timeout=60, check=False)  # noqa: S603
+        self.assertEqual(done.returncode, 0, done.stderr)
+
+    def test_live_collector_and_csv_fallback_agree(self):
+        live = json.loads((ACME / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+        s = Setup()
+        tmp = s.make()
+        self.assertEqual(s.go(tmp)[0], 0)
+        csv_key = json.loads((tmp / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+        strip = [(i["id"], i["time_to_restore"]["value"], i["severity"]) for i in live["incidents"]]
+        self.assertEqual(strip, [(i["id"], i["time_to_restore"]["value"], i["severity"]) for i in csv_key["incidents"]])
+        self.assertEqual([i["id"] for i in live["incidents"]], ["2141", "2203"])  # other services and pre-launch left out
+
+    def test_page_is_self_contained_and_marked_illustrative(self):
+        page = (ACME / "postmortem.html").read_text(encoding="utf-8")
+        self.assertNotRegex(page, r'(?:src|href)="https?://')
+        self.assertNotIn("@import", page)
+        self.assertIn('class="ill">Illustrative', page)
+        self.assertIn("Illustrative", (ACME / "postmortem.md").read_text(encoding="utf-8"))
+
+
+class Figures(unittest.TestCase):
+    def test_every_figure_carries_source_window_and_as_of(self):
+        key = json.loads((ACME / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+        found = list(figures(key))
+        self.assertGreater(len(found), 10)
+        for path, f in found:
+            for field in loop.FIGURE_FIELDS:
+                self.assertIn(field, f, path)
+            self.assertTrue(f["source"], path)
+            self.assertIn("to", f["window"], path)
+
+    def test_time_to_restore_is_computed_in_code(self):
+        key = json.loads((ACME / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+        self.assertEqual([i["time_to_restore"]["value"] for i in key["incidents"]], [72, 22])
+        self.assertEqual(key["figures"]["incidents"]["value"], 2)
+
+    def test_a_number_the_page_does_not_print_is_refused(self):
+        s = Setup()
+        doc = json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        doc["summary"] += " Cost rose 37% in a week."
+        code, out = s.go(s.make(review_doc=doc))
+        self.assertEqual(code, 1)
+        self.assertIn("figure-not-computed", out)
+
+    def test_cited_figures_are_copied_unchanged(self):
+        rec = json.loads((ACME / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))
+        for c in rec["postmortem"]["what_changed"]:
+            for ref, f in c["cited"].items():
+                if ref.startswith("record:"):
+                    self.assertEqual(f, loop.at(rec, ref[len("record:") :]))
+
+
+class StatusWords(unittest.TestCase, Setup):
+    def visible_words(self, page: str) -> str:
+        page = re.sub(r"<style>.*?</style>", "", page, flags=re.S).replace("landed.status", "")
+        page = re.sub(r'<span class="st [a-z]+" data-from="landed">[a-z]+</span>', "", page)
+        return re.sub(r"<[^>]+>", " ", page)
+
+    def test_no_status_word_outside_the_printed_status(self):
+        page = (ACME / "postmortem.html").read_text(encoding="utf-8")
+        self.assertEqual(page.count('data-from="landed"'), 1)
+        self.assertIn('<span class="st landed" data-from="landed">landed</span>', page)
+        self.assertNotRegex(self.visible_words(page), r"\b(landed|watch|stalled)\b")
+        md = (ACME / "postmortem.md").read_text(encoding="utf-8")
+        self.assertEqual(len(re.findall(r"\b(landed|watch|stalled)\b", md.replace("landed.status", ""))), 1)
+
+    def test_status_is_printed_never_computed(self):
+        rec = json.loads((ACME / "upstream" / "quote-drafting.json").read_text(encoding="utf-8"))
+        rec["landed"]["status"] = "stalled"  # the figures still clear the bar: the page prints the word it was given
+        tmp = self.make(rec)
+        self.assertEqual(self.go(tmp, "--html", str(tmp / "p.html"))[0], 0)
+        key = json.loads((tmp / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+        self.assertEqual(key["landed_status"]["printed"], "stalled")
+        self.assertEqual(key["review"], "stall review")
+        page = (tmp / "p.html").read_text(encoding="utf-8")
+        self.assertIn('<span class="st stalled" data-from="landed">stalled</span>', page)
+        self.assertNotRegex(self.visible_words(page), r"\b(landed|watch|stalled)\b")
+
+    def test_without_did_it_land_it_says_so(self):
+        rec = json.loads((ACME / "upstream" / "quote-drafting.json").read_text(encoding="utf-8"))
+        del rec["landed"]
+        tmp = self.make(rec)
+        code, _ = self.go(tmp, "--from", "2026-09-07")
+        self.assertEqual(code, 0)
+        key = json.loads((tmp / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+        self.assertIsNone(key["landed_status"]["printed"])
+        self.assertEqual(key["review"], "incident review")
+        self.assertIn("run did-it-land", json.dumps(key["context"]))
+
+    def test_status_word_in_prose_is_refused(self):
+        doc = json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        doc["summary"] = "Quote drafting landed, but cost did not."
+        code, out = self.go(self.make(review_doc=doc))
+        self.assertEqual(code, 1)
+        self.assertIn("status-word", out)
+
+
+class Blameless(unittest.TestCase, Setup):
+    def check(self, mutate) -> str:
+        doc = json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        mutate(doc)
+        code, out = self.go(self.make(review_doc=doc))
+        self.assertEqual(code, 1, out)
+        return out
+
+    def test_blame_refused(self):
+        self.assertIn("blame-language", self.check(lambda d: d["what_changed"][0].update(change="Human error in the routing config.")))
+
+    def test_fix_rules(self):
+        self.assertIn("fix-many-owners", self.check(lambda d: d["fixes"][0].update(owner="Priya Shah and Mei Lin")))
+        self.assertIn("fix-bad-due", self.check(lambda d: d["fixes"][0].update(due="soon")))
+        self.assertIn("fix-no-done-when", self.check(lambda d: d["fixes"][0].update(done_when="")))
+        self.assertIn("fix-addresses-none", self.check(lambda d: d["fixes"][0].update(addresses=["c9"])))
+
+    def test_change_needs_evidence(self):
+        self.assertIn("change-no-evidence", self.check(lambda d: d["what_changed"][0].update(evidence=[])))
+        self.assertIn("change-no-evidence", self.check(lambda d: d["what_changed"][0].update(evidence=["incident:9999"])))
+
+    def test_mttr_refused(self):
+        self.assertIn("aggregate-claim", self.check(lambda d: d.update(summary=d["summary"] + " MTTR improved.")))
+
+    def test_source_text_is_escaped(self):
+        doc = json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        doc["what_went_well"] = ['<script>alert("x")</script>']
+        tmp = self.make(review_doc=copy.deepcopy(doc))
+        self.assertEqual(self.go(tmp, "--html", str(tmp / "p.html"))[0], 0)
+        self.assertNotIn("<script>", (tmp / "p.html").read_text(encoding="utf-8"))
+
+    def test_fixes_csv_neutralises_formulas(self):
+        doc = json.loads((ACME / "review.json").read_text(encoding="utf-8"))
+        doc["fixes"][0]["fix"] = "=HYPERLINK('x') route the rest back"
+        tmp = self.make(review_doc=doc)
+        self.assertEqual(self.go(tmp, "--csv", str(tmp / "f.csv"))[0], 0)
+        self.assertIn("'=HYPERLINK", (tmp / "f.csv").read_text(encoding="utf-8"))
+
+
+class Repo(unittest.TestCase):
+    TEXT = [
+        p
+        for p in ROOT.rglob("*")
+        if p.is_file() and p.suffix in {".md", ".py", ".json", ".toml", ".yml", ".html"} and not {".git", ".ruff_cache", "vendor", "__pycache__"} & set(p.parts)
+    ]
+
+    def test_no_em_dashes_or_banned_words(self):
+        banned = re.compile(r"\b(AI-powered|unlock|supercharge|seamless|robust|get started|sign up|leverage)\b", re.I)
+        for p in self.TEXT:
+            text = p.read_text(encoding="utf-8")
+            self.assertNotIn(chr(0x2014), text, p)
+            if p.name != "test_loop.py":
+                self.assertIsNone(banned.search(re.sub(r"<style>.*?</style>", "", text, flags=re.S)), p)
+
+    def test_version_is_the_same_everywhere(self):
+        self.assertEqual(tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"], VERSION)
+        self.assertEqual(json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"], VERSION)
+        self.assertIn(f'version: "{VERSION}"', (SKILL / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertEqual(review.VERSION, VERSION)
+        self.assertIn(f"## {VERSION}, 2026-11-26", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
+
+    def test_vendored_files_match_their_pins(self):
+        pins = json.loads((SKILL / "VENDORED.json").read_text(encoding="utf-8"))
+        for rel, pin in pins["files"].items():
+            self.assertEqual(hashlib.sha256((SKILL / rel).read_bytes()).hexdigest(), pin["sha256"], rel)
+        self.assertTrue(pins["files"]["scripts/vendor/landing_brief.py"]["sha256"].startswith("2d13573543c74ebe"))
+
+
+if __name__ == "__main__":
+    unittest.main()

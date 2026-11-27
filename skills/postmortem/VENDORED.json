@@ -1,0 +1,32 @@
+{
+  "repository": "https://github.com/darrencard/product-engineering-update",
+  "commit": "366da9bfede540ec19e9164ad5ad17ce28c1d06b",
+  "release": "v0.11.0 line, main at 2026-11-26",
+  "rule": "Copied unchanged. Never edit these files here; copy them again from the commit and update this file and its hashes.",
+  "files": {
+    "scripts/vendor/landing_brief.py": {
+      "from": "skills/landing-brief/scripts/landing_brief.py",
+      "sha256": "2d13573543c74ebe1bf001b97287287474a0ec298f34709a1bbfc643be051948"
+    },
+    "scripts/vendor/collect.py": {
+      "from": "skills/product-engineering-update/scripts/collect.py",
+      "sha256": "f58d3cd6db1fc7a5e73441618ed94460189aeb724be1c42934313d23d5bd93c4"
+    },
+    "scripts/vendor/convert.py": {
+      "from": "skills/product-engineering-update/scripts/convert.py",
+      "sha256": "f1d055c02e29c67690f3caac7b7eb3213afab20042ff78a8080ebf172b183a55"
+    },
+    "scripts/vendor/from_pagerduty.py": {
+      "from": "skills/product-engineering-update/scripts/from_pagerduty.py",
+      "sha256": "ebffd74962e5ec5b3575b5576aa99afa0963cace02682d99dc529a98a8260135"
+    },
+    "scripts/vendor/from_incidentio.py": {
+      "from": "skills/product-engineering-update/scripts/from_incidentio.py",
+      "sha256": "4607e5daebf873e83848cb05b04155044d02976d44592da28c2dbe68a4931081"
+    },
+    "assets/vendor/template.html": {
+      "from": "skills/product-engineering-update/assets/template.html",
+      "sha256": "e5740431ab5269606709d352d3d253325df740830e8316f06478873e71d430d0"
+    }
+  }
+}

@@ -208,10 +208,7 @@ def main() -> None:
             "contributing_factors": [
                 {
                     "id": "CF1",
-                    "factor": (
-                        "The new queue client read credentials from a secret path set in staging but not in production, "
-                        "and nothing checked the path before deploy."
-                    ),
+                    "factor": ("The new queue client read credentials from a secret path set in staging but not in production, and nothing checked the path before deploy."),
                     "evidence": ["ev-1", "ev-9", "ev-10"],
                 },
                 {

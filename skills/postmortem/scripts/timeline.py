@@ -225,9 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--incidentio", nargs="+", default=[], help="GET /v2/incidents/{id} or a page")
     ap.add_argument("--incidentio-updates", nargs="+", default=[], help="GET /v2/incident_updates pages")
     ap.add_argument("--incidentio-incident", help="the incident reference, if a file holds several")
-    ap.add_argument(
-        "--incidentio-timestamp", action="append", default=[], help='moment=Name, for an account that names a timestamp differently, e.g. mitigated="Fixed"'
-    )
+    ap.add_argument("--incidentio-timestamp", action="append", default=[], help='moment=Name, for an account that names a timestamp differently, e.g. mitigated="Fixed"')
     ap.add_argument("--slack", nargs="+", default=[], help="the incident channel's daily export files")
     ap.add_argument("--slack-users", help="users.json from the same export, for names")
     ap.add_argument("--slack-channel", default="incident", help="the channel name, for references")

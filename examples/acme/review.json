@@ -1,0 +1,69 @@
+{
+  "author": "Priya Shah, Quoting squad lead",
+  "review_on": "2026-12-17",
+  "summary": "Two incidents touched quote drafting after launch. To stop the first, long drafts were sent to a larger model, and that routing stayed in place. It is the main driver of the cost running over the brief's budget in early November. Prices stayed in fixed code throughout, as the brief's line says.",
+  "what_changed": [
+    {
+      "id": "c1",
+      "change": "Long drafts now go to a larger model, vendor-a/xl. The routing was added to stop the timeouts in incident 2141 and had no end date, so it stayed after the incident closed.",
+      "evidence": ["incident:2141", "record:cost/driver/over_budget"]
+    },
+    {
+      "id": "c2",
+      "change": "Tokens per task rose past the brief's budget once the routing was in place.",
+      "evidence": ["record:cost/lines/tokens_per_task/prior", "record:cost/lines/tokens_per_task/actual", "record:cost/lines/tokens_per_task/budget"]
+    },
+    {
+      "id": "c3",
+      "change": "The eval run checks quality only. v1.4 met its eval target while cost per task ran over budget, and nothing put the two side by side before ship.",
+      "evidence": ["record:evals/figures/pass_rate@v1.4", "record:cost/lines/cost_per_task/actual"]
+    },
+    {
+      "id": "c4",
+      "change": "When the price book sync lagged, drafts showed price pending. No draft priced a job itself, because prices come from the price book in fixed code.",
+      "evidence": ["incident:2203"]
+    }
+  ],
+  "what_went_well": [
+    "The line held: the model drafts the text and fixed code sets every price.",
+    "The timeouts were stopped the same afternoon they were reported."
+  ],
+  "fixes": [
+    {
+      "id": "f1",
+      "fix": "Send only drafts over the standard model's context limit to vendor-a/xl, and route the rest back.",
+      "done_when": "cost-budget-check reads tokens per task within budget for a full two-week window.",
+      "owner": "Priya Shah",
+      "due": "2026-12-10",
+      "addresses": ["c1", "c2"],
+      "kind": "prevent"
+    },
+    {
+      "id": "f2",
+      "fix": "Give every routing change made during an incident an end date, and list the open ones in the weekly incident review.",
+      "done_when": "The incident template has an end-date field, and the weekly review shows the open list.",
+      "owner": "Tomás Reyes",
+      "due": "2026-12-17",
+      "addresses": ["c1"],
+      "kind": "process"
+    },
+    {
+      "id": "f3",
+      "fix": "Put the cost-budget-check result beside the eval-kit result on every quote drafting release candidate.",
+      "done_when": "The next release candidate's checklist links both, and a build over budget is held for a decision.",
+      "owner": "Sam Okafor",
+      "due": "2027-01-08",
+      "addresses": ["c3"],
+      "kind": "detect"
+    },
+    {
+      "id": "f4",
+      "fix": "Show 'price updating' and retry when the price book sync lags, instead of price pending.",
+      "done_when": "A staged sync delay shows the message, and the draft fills in when the sync completes.",
+      "owner": "Mei Lin",
+      "due": "2026-12-17",
+      "addresses": ["c4"],
+      "kind": "mitigate"
+    }
+  ]
+}

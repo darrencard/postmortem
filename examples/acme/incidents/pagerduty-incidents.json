@@ -1,0 +1,47 @@
+{
+  "incidents": [
+    {
+      "id": "Q1ACME2032",
+      "incident_number": 2032,
+      "title": "Quote draft beta: drafts slow to load",
+      "created_at": "2026-08-20T10:12:00Z",
+      "resolved_at": "2026-08-20T10:40:00Z",
+      "urgency": "low",
+      "priority": {"summary": "P3"},
+      "service": {"summary": "Quote drafting"}
+    },
+    {
+      "id": "Q1ACME2141",
+      "incident_number": 2141,
+      "title": "Quote drafts time out for long jobs",
+      "created_at": "2026-10-30T14:05:00Z",
+      "resolved_at": "2026-10-30T15:17:00Z",
+      "urgency": "high",
+      "priority": {"summary": "P2"},
+      "service": {"summary": "Quote drafting"}
+    },
+    {
+      "id": "Q1ACME2187",
+      "incident_number": 2187,
+      "title": "Invoice send success rate below 95%",
+      "created_at": "2026-11-12T14:19:00Z",
+      "resolved_at": "2026-11-12T16:10:00Z",
+      "urgency": "high",
+      "priority": {"summary": "P1"},
+      "service": {"summary": "Invoice Service"}
+    },
+    {
+      "id": "Q1ACME2203",
+      "incident_number": 2203,
+      "title": "Quote drafts show price pending while the price book sync lags",
+      "created_at": "2026-11-18T09:40:00Z",
+      "resolved_at": "2026-11-18T10:02:00Z",
+      "urgency": "low",
+      "priority": {"summary": "P3"},
+      "service": {"summary": "Quote drafting"}
+    }
+  ],
+  "limit": 25,
+  "offset": 0,
+  "more": false
+}
