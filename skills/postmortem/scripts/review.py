@@ -52,6 +52,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+if sys.version_info < (3, 11):  # noqa: UP036  (the floor, checked before anything is read or written)
+    sys.exit("postmortem needs Python 3.11 or later; try python3.12")
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "vendor"))
 
@@ -512,13 +515,12 @@ def main(argv: list[str] | None = None) -> int:
     if errors:
         print(f"review: {errors} error(s). Nothing was written. Fix the review or the data, never the wording around a rule.")
         return 1
+    # Every output is built in memory first, so a failure while rendering leaves the record as it was found.
+    outputs = [(args.html, render_html.page), (args.md, markdown), (args.csv, fixes_csv)]
+    texts = [(Path(dest), build_text(key)) for dest, build_text in outputs if dest]
     loop.write(record_path, record, key)
-    if args.html:
-        Path(args.html).write_text(render_html.page(key), encoding="utf-8")
-    if args.md:
-        Path(args.md).write_text(markdown(key), encoding="utf-8")
-    if args.csv:
-        Path(args.csv).write_text(fixes_csv(key), encoding="utf-8")
+    for dest, text in texts:
+        dest.write_text(text, encoding="utf-8")
     print(f"review: {key['check']} Status printed from landed.status: {key['landed_status']['printed'] or 'not read'}. Wrote the postmortem key to {record_path}.")
     return 0
 

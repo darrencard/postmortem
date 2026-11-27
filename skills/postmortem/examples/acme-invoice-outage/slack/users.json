@@ -3,21 +3,21 @@
     "id": "U01",
     "name": "robin",
     "profile": {
-      "real_name": "Platform on-call lead"
+      "real_name": "Tech lead, Quoting squad"
     }
   },
   {
     "id": "U02",
     "name": "kit",
     "profile": {
-      "real_name": "Invoicing squad lead"
+      "real_name": "Lead, Quoting squad"
     }
   },
   {
     "id": "U03",
     "name": "noor",
     "profile": {
-      "real_name": "AI assistant product lead"
+      "real_name": "Product manager, Quoting squad"
     }
   }
 ]

@@ -1098,7 +1098,7 @@
         "id": "f2",
         "fix": "Give every routing change made during an incident an end date, and list the open ones in the weekly incident review.",
         "done_when": "The incident template has an end-date field, and the weekly review shows the open list.",
-        "owner": "Platform on-call lead",
+        "owner": "Product manager, Quoting squad",
         "due": "2026-12-17",
         "addresses": [
           "c1"
@@ -1120,7 +1120,7 @@
         "id": "f4",
         "fix": "Show 'price updating' and retry when the price book sync lags, instead of price pending.",
         "done_when": "A staged sync delay shows the message, and the draft fills in when the sync completes.",
-        "owner": "Price book squad lead",
+        "owner": "Product manager, Quoting squad",
         "due": "2026-12-17",
         "addresses": [
           "c4"

@@ -8,7 +8,7 @@
       "message": "Rolling back invoice-service to v4.17.3.",
       "updater": {
         "user": {
-          "name": "Platform on-call lead"
+          "name": "Tech lead, Quoting squad"
         }
       }
     },
@@ -20,7 +20,7 @@
       "message": "Sends recovered. Backlog draining.",
       "updater": {
         "user": {
-          "name": "Platform on-call lead"
+          "name": "Tech lead, Quoting squad"
         }
       }
     }

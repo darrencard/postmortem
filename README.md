@@ -48,7 +48,7 @@ The bet's status is did-it-land's. The page prints `landed.status` and never com
   "tool": "postmortem 0.3.0",
   "as_of": "2026-11-26",
   "review": "learning review",
-  "landed_status": {"printed": "landed", "from": "landed.status", "computed_by": "did-it-land 0.3.0"},
+  "landed_status": {"printed": "landed", "from": "landed.status", "computed_by": "did-it-land 0.3.1"},
   "figures": {
     "incidents": {"value": 2, "unit": "incidents", "source": "PagerDuty (acme): PagerDuty incidents ...",
                   "window": {"from": "2026-09-07", "to": "2026-11-26"}, "as_of": "2026-11-26"}

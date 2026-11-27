@@ -39,6 +39,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+if sys.version_info < (3, 11):  # noqa: UP036  (the floor, checked before anything is read or written)
+    sys.exit("postmortem needs Python 3.11 or later; try python3.12")
+
 PLACEHOLDER_OWNERS = {
     "",
     "tbd",

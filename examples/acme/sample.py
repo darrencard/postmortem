@@ -22,6 +22,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+if sys.version_info < (3, 11):  # noqa: UP036  (the floor, checked before anything is read or written)
+    sys.exit("postmortem needs Python 3.11 or later; try python3.12")
+
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path("examples/acme")
 SCRIPTS = ROOT / "skills" / "postmortem" / "scripts"
@@ -39,13 +42,15 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     os.chdir(ROOT)
     into = Path(args.into).resolve() if args.into else ROOT / HERE
-    (into / "landing").mkdir(parents=True, exist_ok=True)
-    if into != ROOT / HERE:
-        (into / "briefs").mkdir(exist_ok=True)
-        shutil.copy(HERE / "briefs" / f"{BET}.md", into / "briefs" / f"{BET}.md")
-    # Start from the record as did-it-land left it: postmortem reads up to landed and writes only its own key.
-    shutil.copy(HERE / "upstream" / f"{BET}.json", into / "landing" / f"{BET}.json")
     with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        # Build in a scratch folder and move the outputs into place only on success, so a failed run never leaves
+        # the committed record stripped back to its upstream keys.
+        (work / "landing").mkdir()
+        (work / "briefs").mkdir()
+        shutil.copy(HERE / "briefs" / f"{BET}.md", work / "briefs" / f"{BET}.md")
+        # Start from the record as did-it-land left it: postmortem reads up to landed and writes only its own key.
+        shutil.copy(HERE / "upstream" / f"{BET}.json", work / "landing" / f"{BET}.json")
         # Live first: the PagerDuty page goes through the Leader Report's own collector, filtered to the bet's service.
         subprocess.run(  # noqa: S603  (fixed arguments, this interpreter)
             [
@@ -62,15 +67,24 @@ def main(argv: list[str] | None = None) -> int:
         )  # fmt: skip
         code = review.main(
             [
-                "--record", str(into / "landing" / f"{BET}.json"),
-                "--incidents", str(Path(tmp) / "data" / "incidents.json"),
+                "--record", str(work / "landing" / f"{BET}.json"),
+                "--incidents", str(work / "data" / "incidents.json"),
                 "--review", str(HERE / "review.json"),
                 "--as-of", AS_OF,
-                "--html", str(into / "postmortem.html"),
-                "--md", str(into / "postmortem.md"),
+                "--html", str(work / "postmortem.html"),
+                "--md", str(work / "postmortem.md"),
                 "--illustrative",
             ]
         )  # fmt: skip
+        if code == 0:
+            (into / "landing").mkdir(parents=True, exist_ok=True)
+            if into != ROOT / HERE:
+                (into / "briefs").mkdir(exist_ok=True)
+                shutil.copy(work / "briefs" / f"{BET}.md", into / "briefs" / f"{BET}.md")
+            for name in ("postmortem.html", "postmortem.md", f"landing/{BET}.json"):
+                tmp_out = into / f"{name}.tmp"
+                shutil.copy(work / name, tmp_out)
+                tmp_out.replace(into / name)
     if code == 0:
         print(f"sample: wrote postmortem.html, postmortem.md and landing/{BET}.json to {into}")
     return code

@@ -18,6 +18,7 @@ import tempfile
 import tomllib
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILL = ROOT / "skills" / "postmortem"
@@ -39,9 +40,13 @@ def dumps(v: object) -> str:
 
 def run_sample() -> Path:
     out = Path(tempfile.mkdtemp())
+    run_sample_into(out)
+    return out
+
+
+def run_sample_into(out: Path) -> None:
     with contextlib.redirect_stdout(io.StringIO()):
         assert sample.main(["--into", str(out)]) == 0  # noqa: S101
-    return out
 
 
 def figures(node: object, path: str = ""):
@@ -129,6 +134,72 @@ class Record(unittest.TestCase, Setup):
         self.assertIn("fix-no-owner", out)
         self.assertEqual((tmp / "landing" / "quote-drafting.json").read_bytes(), before)
         self.assertFalse((tmp / "p.html").exists())
+
+
+ORG_CHART = {"Head of Product, Quoting squad", "Lead, Quoting squad", "Tech lead, Quoting squad", "Product manager, Quoting squad"}
+ENTRY_SCRIPTS = [*sorted((SKILL / "scripts").glob("*.py")), ACME / "sample.py"]
+
+
+class Floor(unittest.TestCase, Setup):
+    """Python 3.11 is the floor: an older interpreter is stopped before anything is read or written."""
+
+    def test_every_entry_script_stops_on_an_old_python_with_a_plain_message(self):
+        mains = [p for p in ENTRY_SCRIPTS if "__main__" in p.read_text(encoding="utf-8")]
+        self.assertGreaterEqual(len(mains), 6)
+        for path in mains:
+            code = f"import runpy, sys; sys.version_info = (3, 9, 6); runpy.run_path({str(path)!r}, run_name='__main__')"
+            done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=30, check=False)  # noqa: S603
+            self.assertEqual(done.returncode, 1, path.name)
+            self.assertIn("needs Python 3.11 or later; try python3.12", done.stderr, path.name)
+
+    def test_a_failed_sample_run_leaves_the_record_as_it_was(self):
+        out = run_sample()
+        before = (out / "landing" / "quote-drafting.json").read_bytes()
+        with mock.patch.object(review.render_html, "page", side_effect=TypeError("boom")), self.assertRaises(TypeError):
+            run_sample_into(out)
+        self.assertEqual((out / "landing" / "quote-drafting.json").read_bytes(), before)
+        self.assertIn(b'"postmortem"', before)
+
+    def test_a_render_failure_in_review_writes_nothing(self):
+        tmp = self.make()
+        before = (tmp / "landing" / "quote-drafting.json").read_bytes()
+        with mock.patch.object(review.render_html, "page", side_effect=TypeError("boom")), self.assertRaises(TypeError):
+            self.go(tmp, "--html", str(tmp / "p.html"))
+        self.assertEqual((tmp / "landing" / "quote-drafting.json").read_bytes(), before)
+        self.assertFalse((tmp / "p.html").exists())
+
+
+class OrgChart(unittest.TestCase):
+    """Acme people are the Quoting squad's roles only: no invented names, no other squads, no on-call owner."""
+
+    def test_loop_sample_owners_and_author_are_org_chart_roles(self):
+        key = json.loads((ACME / "landing" / "quote-drafting.json").read_text(encoding="utf-8"))["postmortem"]
+        self.assertLessEqual({f["owner"] for f in key["fixes"]} | {key["author"], key["brief"]["decides"]}, ORG_CHART)
+
+    def test_team_sample_people_are_org_chart_roles(self):
+        draft = json.loads((SKILL / "examples" / "acme-invoice-outage" / "draft.json").read_text(encoding="utf-8"))
+        owners = {a["owner"] for a in draft["action_items"]} | {draft["author"]}
+        self.assertLessEqual(owners, ORG_CHART)
+        users = json.loads((SKILL / "examples" / "acme-invoice-outage" / "slack" / "users.json").read_text(encoding="utf-8"))
+        self.assertLessEqual({u["profile"]["real_name"] for u in users}, ORG_CHART)
+
+    def test_no_on_call_or_other_squad_owner_anywhere(self):
+        for path in [ACME / "review.json", ACME / "postmortem.md", SKILL / "examples" / "acme-postmortem.md"]:
+            text = path.read_text(encoding="utf-8")
+            self.assertNotRegex(text, r"(?i)on-call lead|squad lead|product lead|VP Product", path)
+
+
+class Colour(unittest.TestCase):
+    def test_selection_and_focus_print_in_ink_not_green(self):
+        page = (ACME / "postmortem.html").read_text(encoding="utf-8")
+        css = re.search(r"<style>(.*?)</style>", page, re.S).group(1)
+        self.assertLess(css.index("::selection{background:var(--landed)"), css.index("::selection{background:var(--t1)"))
+        self.assertLess(css.index("outline:2px solid var(--landed)"), css.index(":focus-visible{outline-color:var(--t1)}"))
+
+    def test_chips_print_in_ink(self):
+        page = (ACME / "postmortem.html").read_text(encoding="utf-8")
+        for chip in re.findall(r'<span class="chip"[^>]*>', page):
+            self.assertNotIn("brass", chip)
 
 
 class Sample(unittest.TestCase):

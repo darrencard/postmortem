@@ -10,6 +10,9 @@
 - One self-contained HTML page in the Leader Report style, with a Markdown twin and the fixes as CSV.
 - Sample: `examples/acme/postmortem.html` for Acme's quote drafting, rebuilt byte for byte by `python3 examples/acme/sample.py`.
 - Version 0.3.0 matches the other Landing Loop skills; there was no 0.2.0.
+- Every entry script stops on Python older than 3.11 before it reads or writes anything. The sample builds in a scratch folder and moves its outputs into place only on success, and `review.py` renders every output before it writes the record, so a failed run never strips the `postmortem` key.
+- Acme people in both samples are the Quoting squad's org-chart roles only; no on-call or other-squad owner.
+- Text selection and keyboard focus print in ink, not the template's green, which is kept for landed.
 
 ## 0.1.0, 2026-11-26
 

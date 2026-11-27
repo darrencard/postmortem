@@ -56,9 +56,9 @@ Source: PagerDuty (acme): PagerDuty incidents, created\_at to resolved\_at, serv
 | Fix | Done when | Owner | Due | Addresses |
 |---|---|---|---|---|
 | f1. Send only drafts over the standard model's context limit to vendor-a/xl, and route the rest back. | cost-budget-check reads tokens per task within budget for a full two-week window. | Lead, Quoting squad | 2026-12-10 | c1, c2 |
-| f2. Give every routing change made during an incident an end date, and list the open ones in the weekly incident review. | The incident template has an end-date field, and the weekly review shows the open list. | Platform on-call lead | 2026-12-17 | c1 |
+| f2. Give every routing change made during an incident an end date, and list the open ones in the weekly incident review. | The incident template has an end-date field, and the weekly review shows the open list. | Product manager, Quoting squad | 2026-12-17 | c1 |
 | f3. Put the cost-budget-check result beside the eval-kit result on every quote drafting release candidate. | The next release candidate's checklist links both, and a build over budget is held for a decision. | Tech lead, Quoting squad | 2027-01-08 | c3 |
-| f4. Show 'price updating' and retry when the price book sync lags, instead of price pending. | A staged sync delay shows the message, and the draft fills in when the sync completes. | Price book squad lead | 2026-12-17 | c4 |
+| f4. Show 'price updating' and retry when the price book sync lags, instead of price pending. | A staged sync delay shows the message, and the draft fills in when the sync completes. | Product manager, Quoting squad | 2026-12-17 | c4 |
 
 Check: what changed: 4 listed, each with its evidence. Who owns each fix: 4 of 4 with one owner and a due date.
 

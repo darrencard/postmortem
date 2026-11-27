@@ -1,6 +1,6 @@
 {
   "title": "Invoice emails not sending after the queue client release",
-  "author": "Invoicing squad lead",
+  "author": "Lead, Quoting squad",
   "review_on": "2026-12-15",
   "summary": "For 1 h 10 min, Acme did not send invoice emails. Release v4.18.0 of invoice-service read the mail queue's credentials from a path production did not have. 4,860 invoices went out late. Rolling back to v4.17.3 mitigated it.",
   "what_happened": "At 13:40 UTC invoice-service v4.18.0 deployed. Errors began at 13:42. The send monitor paged on-call 37 min later, at 14:19. On-call rolled back at 14:49 and sends recovered by 14:52. The AI assistant's invoice chasing was paused at 14:44 so it would not chase invoices customers never received, and restarted once the backlog drained.",
@@ -40,7 +40,7 @@
     {
       "id": "A1",
       "action": "Add a deploy check that fails when a secret path the service reads is missing in the target environment.",
-      "owner": "Invoicing squad lead",
+      "owner": "Lead, Quoting squad",
       "due": "2026-12-05",
       "done_when": "A deploy to staging with a missing secret path fails the pipeline, shown in a test run.",
       "addresses": [
@@ -51,7 +51,7 @@
     {
       "id": "A2",
       "action": "Page on-call when invoice send errors appear, as well as on a low success rate.",
-      "owner": "Platform on-call lead",
+      "owner": "Tech lead, Quoting squad",
       "due": "2026-11-28",
       "done_when": "A test error in invoice sending pages on-call, shown in a game-day drill.",
       "addresses": [
@@ -62,7 +62,7 @@
     {
       "id": "A3",
       "action": "Make the assistant skip any chase whose invoice has no delivery receipt.",
-      "owner": "AI assistant product lead",
+      "owner": "Product manager, Quoting squad",
       "due": "2026-12-12",
       "done_when": "A chase for an undelivered test invoice is skipped and logged.",
       "addresses": [
