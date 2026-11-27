@@ -50,7 +50,7 @@ PAGE_CSS = """
 main.solo{margin-left:0}
 .solo .slide{min-height:0}
 .solo .slide.cover{min-height:0;padding-top:40px;padding-bottom:48px;justify-content:flex-start}
-.solo h1{font-size:clamp(34px,4.6vw,60px);line-height:1;letter-spacing:-.04em;max-width:22ch;margin-bottom:20px}
+.solo h1{font-size:clamp(34px,4.6vw,60px);line-height:1;letter-spacing:-.04em;text-wrap:balance;margin-bottom:20px}
 .solo .lede{margin-bottom:24px}
 .solo .lede b{color:var(--t1);font-weight:500}
 .marks{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;margin:0 0 20px;font:400 11px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
@@ -64,7 +64,7 @@ main.solo{margin-left:0}
 .next .who .o::before{content:"DECIDES"}.next .who .d::before{content:"ON"}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px 56px;align-items:start}
 .cols h3{margin-bottom:8px}
-.say{max-width:76ch;margin:0 0 28px;font-size:16px;line-height:1.55;color:var(--t1)}
+.say{margin:0 0 28px;font-size:16px;line-height:1.55;color:var(--t1)}
 .items{margin:0;padding:0;list-style:none}
 .items li{display:grid;grid-template-columns:32px minmax(0,1fr);gap:4px 12px;border-top:1px solid var(--line);padding:12px 0;font-size:13.5px;line-height:1.55;color:var(--t2)}
 .items .id{font:400 11px/22px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
@@ -82,7 +82,7 @@ main.solo{margin-left:0}
 .tgt{margin:0 0 8px;font-size:13px;color:var(--t2)}
 .solo details{margin-top:4px}
 .solo details>*:not(summary){margin-top:12px}
-.solo details p,.solo details li{margin:0 0 10px;font-size:13px;color:var(--t2);max-width:80ch}
+.solo details p,.solo details li{margin:0 0 10px;font-size:13px;color:var(--t2)}
 .solo details ul{padding-left:18px}
 .tablewrap td,.tablewrap th{overflow-wrap:anywhere}
 ::selection{background:var(--t1);color:var(--bg)}
@@ -95,6 +95,9 @@ main.solo{margin-left:0}
 @media (max-width:560px){.figs>div{grid-template-columns:1fr;gap:0}}
 .scg .sc-l{text-transform:uppercase;letter-spacing:.06em}
 @container sc (min-width:800px){.scg .sc-r:has(>.sc-p:empty)>.sc-n{grid-column:1/3}.scg .sc-r:has(>.sc-p:empty)>.sc-p{display:none}}
+/* Full column (site rule since 2026-11-25): every title and text block runs the content column, the scorecard frame's width. */
+.solo h1,.solo h2,.solo h3,.solo .lede,.solo .next,.solo p,.solo li,.solo .sk figcaption{max-width:none}
+.solo h1{text-wrap:balance}.solo .lede,.solo p,.solo li,.solo .sk figcaption{text-wrap:pretty}
 """
 
 # The smallest text the page prints, at every width. The vendored template and svgkit keep their own sizes on disk

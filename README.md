@@ -45,7 +45,7 @@ The project's status is did-it-land's. The page prints `landed.status` and never
 
 ```json
 "postmortem": {
-  "tool": "postmortem 0.3.2",
+  "tool": "postmortem 0.3.3",
   "as_of": "2026-11-26",
   "review": "learning review",
   "landed_status": {"printed": "landed", "from": "landed.status", "computed_by": "did-it-land 0.3.1"},

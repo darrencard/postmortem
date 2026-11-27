@@ -33,7 +33,7 @@ import review  # noqa: E402
 import sample  # noqa: E402
 import svgkit  # noqa: E402
 
-VERSION = "0.3.2"
+VERSION = "0.3.3"
 
 
 def dumps(v: object) -> str:
@@ -499,7 +499,7 @@ class Visual(unittest.TestCase):
         self.assertIn("<h1>Quote drafting had two incidents since 2026-09-07. All four fixes have one owner and a due date.</h1>", body)
         self.assertEqual(body.count('<div class="next">'), 1, "one next step leads the page")
         self.assertIn('<span class="o">Head of Product, Quoting squad</span><span class="d">2026-12-17</span>', body)
-        self.assertIn("<span>Postmortem</span><span>As of 2026-11-26</span><span>v0.3.2</span>", body)
+        self.assertIn("<span>Postmortem</span><span>As of 2026-11-26</span><span>v0.3.3</span>", body)
         self.assertNotIn("Book a call", body, "a sample is the skill's own output: no call to action")
         self.assertTrue(self.md.startswith("# Quote drafting had two incidents since 2026-09-07."))
 

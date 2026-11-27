@@ -64,7 +64,7 @@ import collect  # noqa: E402  (vendored unchanged, see VENDORED.json)
 import loop  # noqa: E402
 import render_html  # noqa: E402
 
-VERSION = "0.3.2"
+VERSION = "0.3.3"
 TOOL = f"postmortem {VERSION}"
 REVIEW_KIND = {"landed": "learning review", "stalled": "stall review", "watch": "mid-course review", None: "incident review"}
 NEXT_SKILL = {"portfolio": "bet-portfolio-review", "spec": "spec-auditor", "cost": "cost-budget-check", "evals": "eval-kit", "landed": "did-it-land"}

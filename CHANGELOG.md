@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3, 2026-11-27
+
+- Full column: the heading, the intro, the next step, section text and captions run the full width of the content column, the same width as the scorecard frame (the site's rule since 2026-11-25). The page's own CSS drops its caps on text (the heading's 22ch, the summary's 76ch and the folds' 80ch) and overrides the vendored template's 62ch intro and svgkit's 76ch caption after their rules, so neither hash-pinned file changes. The heading balances its lines; text breaks with `text-wrap: pretty`. A test checks the page CSS caps no text and the sample carries the override.
+
 ## 0.3.2, 2026-11-27
 
 - Scorecard fix round: severity prints in plain words, major (P1, P2) or minor (P3 and up), or the source's own severity name; the source's code (P2, P3) prints only in the engineers' fold, on the page and in the Markdown twin. Every fix owner is in Quoting squad, so the team prints once in the frame head and each row prints the role only ("Lead", "Tech lead"), with no wrap. A fix row has no picture, so its name takes the picture column too. The figure column prints in one case, numerals and capitals ("72 MINUTES"), as /update. Tests for each.

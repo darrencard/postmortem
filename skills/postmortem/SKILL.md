@@ -4,7 +4,7 @@ description: Writes a blameless postmortem, for a project or for one incident. F
 license: MIT. See LICENSE in the repository root.
 metadata:
   author: Dacard
-  version: "0.3.2"
+  version: "0.3.3"
 ---
 
 # Postmortem
