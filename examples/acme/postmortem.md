@@ -34,8 +34,8 @@ Two incidents touched quote drafting after launch. To stop the first, long draft
 
 | What happened | Severity | Started (UTC) | Fixed (UTC) | Time to fix |
 |---|---|---|---|---|
-| Drafts timed out | P2 | 2026-10-30 14:05 | 2026-10-30 15:17 | 72 minutes |
-| Price sync lagged | P3 | 2026-11-18 09:40 | 2026-11-18 10:02 | 22 minutes |
+| Drafts timed out | major | 2026-10-30 14:05 | 2026-10-30 15:17 | 72 minutes |
+| Price sync lagged | minor | 2026-11-18 09:40 | 2026-11-18 10:02 | 22 minutes |
 
 ## What went well
 
@@ -56,10 +56,10 @@ Target: 40% quote draft acceptance rate by 2026-11-15.
 
 Skill: `postmortem` 0.3.2.
 
-| Incident | What happened |
-|---|---|
-| 2141 | Drafts timed out |
-| 2203 | Price sync lagged |
+| Incident | What happened | Severity in the source |
+|---|---|---|
+| 2141 | Drafts timed out | P2 |
+| 2203 | Price sync lagged | P3 |
 
 The written parts, as written:
 

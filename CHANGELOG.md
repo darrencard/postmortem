@@ -2,6 +2,7 @@
 
 ## 0.3.2, 2026-11-27
 
+- Scorecard fix round: severity prints in plain words, major (P1, P2) or minor (P3 and up), or the source's own severity name; the source's code (P2, P3) prints only in the engineers' fold, on the page and in the Markdown twin. Every fix owner is in Quoting squad, so the team prints once in the frame head and each row prints the role only ("Lead", "Tech lead"), with no wrap. A fix row has no picture, so its name takes the picture column too. The figure column prints in one case, numerals and capitals ("72 MINUTES"), as /update. Tests for each.
 - The picture is scorecard rows in the grammar of the outcome scorecard on dacard.ai/update (svgkit 1.2.0, landing-loop 78784ef): one row per incident, named by what happened, with one ink bar for its time to fix scaled to the longest in the frame (no plan bar and no hatching, as there is no plan for time to fix), the time and the severity; then one row per fix with its due date and its one owner in brass. Geist Mono 12px for labels and figures, Geist 14px for names, no text inside a picture, no box inside the frame. The timeline, its panel and the boxed chips are gone; words print as text.
 - Cited check words in their skill's words, the engineers' fold included: eval-kit's "not confirmed: too close to call", did-it-land's "inside normal ups and downs".
 - README and SKILL.md in plain words: project, target, the project file, the landing brief defined as a one-page plan. Keys, file names and flags are unchanged. SKILL.md uses the user's own word if they say bet.

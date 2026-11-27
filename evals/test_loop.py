@@ -379,9 +379,38 @@ class Visual(unittest.TestCase):
             self.assertIn(f'<span class="sc-l"><b>{loop.shown(i["time_to_restore"]).upper()}</b></span>', frame)
         for f in self.key["fixes"]:
             self.assertIn(f'<span class="sc-l"><b>{f["due"]}</b></span>', frame)
-            self.assertIn(f"{f['owner']}</span>", frame)
+            role = f["owner"].removesuffix(", Quoting squad")
+            self.assertIn(f"</svg>{role}</span>", frame, "the role only; the team prints once in the head")
         # Brass is a person's call: one person mark per fix, none on an incident.
         self.assertEqual(frame.count('class="sc-o"'), len(self.key["fixes"]))
+
+    def test_the_team_prints_once_in_the_frame_head_and_each_row_the_role(self):
+        frame = svgkit.frames_in(self.page)[0]
+        head, body = frame.split('<div class="sc-b">', 1)
+        self.assertIn("</svg>Quoting squad</span>", head)
+        self.assertNotIn("Quoting squad", body.split('<span class="sc-c">', 1)[0])
+        self.assertEqual(render_html.team_of(["Lead, Quoting squad", "Tech lead, Quoting squad"]), "Quoting squad")
+        self.assertEqual(render_html.team_of(["Lead, Quoting squad", "Tech lead, Billing"]), "")
+        self.assertEqual(render_html.team_of(["Lead, Quoting squad", "CTO"]), "")
+        self.assertEqual(render_html.role_of("Head of Product, Quoting squad", "Quoting squad"), "Head of Product")
+
+    def test_severity_prints_major_or_minor_and_the_source_code_only_in_the_fold(self):
+        self.assertEqual([render_html.severity_word(s) for s in ("P1", "P2", "p3", "P4", "SEV1", "SEV-3", "Critical", "")], ["major", "major", "minor", "minor", "major", "minor", "critical", ""])
+        public, fold = self.page.split("For your engineers", 1)
+        self.assertNotRegex(svgkit.page_text(public), r"\bP\d\b")
+        frame = svgkit.frames_in(self.page)[0]
+        self.assertIn('<span class="sc-w">major</span>', frame)
+        self.assertIn('<span class="sc-w">minor</span>', frame)
+        self.assertIn(">P2<", fold)
+        md = (ACME / "postmortem.md").read_text(encoding="utf-8")
+        md_public, md_fold = md.split("## For your engineers", 1)
+        self.assertNotRegex(md_public, r"\| P\d \|")
+        self.assertIn("| P2 |", md_fold)
+
+    def test_a_fix_row_gives_its_name_the_picture_column_and_figures_print_in_one_case(self):
+        css = self.page.split("<style>", 1)[1].split("</style>", 1)[0]
+        self.assertIn("@container sc (min-width:800px){.scg .sc-r:has(>.sc-p:empty)>.sc-n{grid-column:1/3}.scg .sc-r:has(>.sc-p:empty)>.sc-p{display:none}}", css)
+        self.assertIn(".scg .sc-l{text-transform:uppercase;letter-spacing:.06em}", css)
 
     def test_green_and_red_only_beside_their_words(self):
         body = self.page.split("</style>", 1)[1]

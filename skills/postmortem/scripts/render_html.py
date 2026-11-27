@@ -44,6 +44,8 @@ TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "vendor" / "templ
 STYLE = re.compile(r"<style>(.*?)</style>", re.S)
 
 # Layout for this page only. Everything else comes from the template's stylesheet and svgkit.CSS.
+# In the scorecard, a row with no picture (a fix) gives its name the picture column too, so names stay on one line,
+# and the figure column prints in one case, numerals and capitals, as /update does.
 PAGE_CSS = """
 main.solo{margin-left:0}
 .solo .slide{min-height:0}
@@ -91,6 +93,8 @@ main.solo{margin-left:0}
 .stack td{border:0;padding:3px 0;display:grid;grid-template-columns:118px 1fr;gap:12px}.stack td.num{text-align:left;white-space:normal}
 .stack td::before{content:attr(data-l);font:400 11px/20px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}}
 @media (max-width:560px){.figs>div{grid-template-columns:1fr;gap:0}}
+.scg .sc-l{text-transform:uppercase;letter-spacing:.06em}
+@container sc (min-width:800px){.scg .sc-r:has(>.sc-p:empty)>.sc-n{grid-column:1/3}.scg .sc-r:has(>.sc-p:empty)>.sc-p{display:none}}
 """
 
 # The smallest text the page prints, at every width. The vendored template and svgkit keep their own sizes on disk
@@ -235,6 +239,32 @@ def minutes(f: dict[str, Any]) -> float:
     return f["value"] * per
 
 
+PRIORITY = re.compile(r"^(?:P|SEV|S)[\s-]?(\d+)$", re.I)
+
+
+def severity_word(source: str) -> str:
+    """A severity in plain words: P1 or P2 (or SEV1, SEV2) is major, P3 and up minor. A source that names its own
+    severities ("Critical", "Minor") keeps its own name. Empty stays empty. The source's code prints only in the
+    engineers' fold."""
+    found = PRIORITY.match((source or "").strip())
+    if found:
+        return "major" if int(found.group(1)) <= 2 else "minor"
+    return (source or "").strip().lower()
+
+
+def team_of(owners: list[str]) -> str:
+    """The team every owner shares ("Lead, Quoting squad" and "Tech lead, Quoting squad" share "Quoting squad"), or
+    "" when they do not all name the same one. The frame prints it once in its head; each row prints the role."""
+    teams = {o.rpartition(", ")[2] for o in owners if ", " in o}
+    if len(owners) < 2 or len(teams) != 1 or any(", " not in o for o in owners):
+        return ""
+    return teams.pop()
+
+
+def role_of(owner: str, team: str) -> str:
+    return owner[: -len(", " + team)] if team and owner.endswith(", " + team) else owner
+
+
 def rows(key: dict[str, Any]) -> str:
     """Incidents, then fixes, as scorecard rows. An incident: what happened, one ink bar for its time to fix scaled to
     the longest in the frame (there is no plan for time to fix, so no plan bar and no hatching), the time, its severity.
@@ -248,19 +278,23 @@ def rows(key: dict[str, Any]) -> str:
                 happened(i),
                 picture=sk.share_bar(minutes(f), longest),
                 figure=sk.figure_line(loop.shown(f).upper()),
-                word=sk.check_word(i["severity"] or "no severity"),
+                word=sk.check_word(severity_word(i["severity"]) or "no severity"),
             )
         )
     if not key["incidents"]:
         out.append(sk.sc_note("No incidents started in the window."))
+    team = team_of([f["owner"] for f in key["fixes"]])
     for f in key["fixes"]:
-        out.append(sk.sc_row(plain(f["fix"]), figure=sk.figure_line(f["due"]), word=sk.person_call(f["owner"])))
+        out.append(sk.sc_row(plain(f["fix"]), figure=sk.figure_line(f["due"]), word=sk.person_call(role_of(f["owner"], team))))
+    legend = sk.legend("actual", "time to fix") if key["incidents"] else ""
+    if team:
+        legend += f'<span class="sc-k">{sk.person_mark()}{e(team)}</span>'
     return sk.sc_frame(
         out,
         label=heading(key),
         title="Time to fix, then fixes",
         head=["Incident, then fix", "", "Time to fix · due", "Severity · owner"],
-        legend=sk.legend("actual", "time to fix") if key["incidents"] else "",
+        legend=legend,
         caption=caption(key),
         illustrative=bool(key["illustrative"]),
         word_max=220,
@@ -295,6 +329,9 @@ def caption(key: dict[str, Any]) -> str:
     out = ""
     if longest:
         out = f"One row per incident since {key['window']['from']}, drawn as its time to fix against the longest, {loop.shown(longest['time_to_restore'])}. "
+    team = team_of([f["owner"] for f in key["fixes"]])
+    if team:
+        return out + f"Then one row per fix, with its due date and its one owner's role in brass; every owner is in {team}, named once in the head."
     return out + "Then one row per fix, with its due date and its one owner in brass."
 
 
@@ -349,7 +386,7 @@ def incidents(key: dict[str, Any]) -> str:
     for i in key["incidents"]:
         tab.row(
             ("", e(happened(i))),
-            ("", e(i["severity"] or "not set")),
+            ("", e(severity_word(i["severity"]) or "not set")),
             ("mo", e(stamp(i["started_at"]))),
             ("num", e(loop.shown(i["time_to_restore"]))),
         )
@@ -405,9 +442,9 @@ def engineers(key: dict[str, Any]) -> str:
         for f in r["figures"] or [None]:
             cells = (e(loop.shown(f)), e(loop.window_text(f)), e(f["source"])) if f else ("none", "", e(r["text"]))
             ctx.row(("", e(r["label"])), ("mono", e(cited(r["word"]))), ("num", cells[0]), ("mo", cells[1]), ("", cells[2]))
-    ids = Table(("Incident", "What happened", "Started (UTC)", "Fixed (UTC)"))
+    ids = Table(("Incident", "What happened", "Severity in the source", "Started (UTC)", "Fixed (UTC)"))
     for i in key["incidents"]:
-        ids.row(("mono", e(i["id"])), ("", e(happened(i))), ("mo", e(stamp(i["started_at"]))), ("mo", e(stamp(i["restored_at"]))))
+        ids.row(("mono", e(i["id"])), ("", e(happened(i))), ("mono", e(i["severity"] or "not set")), ("mo", e(stamp(i["started_at"]))), ("mo", e(stamp(i["restored_at"]))))
     written = "".join(f"<li>{e(c['id'])}: {e(c['change'])}</li>" for c in key["what_changed"])
     written += "".join(f"<li>{e(f['id'])} ({e(f.get('kind') or 'fix')}): {e(f['fix'])} Done when: {e(f['done_when'])}</li>" for f in key["fixes"])
     status = f"printed from <code>{e(st['from'])}</code> as {e(st['computed_by'])} wrote it" if st["printed"] else "not read"
@@ -517,7 +554,7 @@ def markdown(key: dict[str, Any]) -> str:
         w("| What happened | Severity | Started (UTC) | Fixed (UTC) | Time to fix |")
         w("|---|---|---|---|---|")
         for i in key["incidents"]:
-            w(f"| {md(happened(i))} | {md(i['severity'] or 'not set')} | {stamp(i['started_at'])} | {stamp(i['restored_at'])} | {loop.shown(i['time_to_restore'])} |")
+            w(f"| {md(happened(i))} | {md(severity_word(i['severity']) or 'not set')} | {stamp(i['started_at'])} | {stamp(i['restored_at'])} | {loop.shown(i['time_to_restore'])} |")
     else:
         w("No incidents started in the window.")
     w("")
@@ -539,10 +576,10 @@ def markdown(key: dict[str, Any]) -> str:
     w(f"Skill: `postmortem` {key['tool'].rsplit(' ', 1)[-1]}.")
     w("")
     if key["incidents"]:
-        w("| Incident | What happened |")
-        w("|---|---|")
+        w("| Incident | What happened | Severity in the source |")
+        w("|---|---|---|")
         for i in key["incidents"]:
-            w(f"| {md(i['id'])} | {md(happened(i))} |")
+            w(f"| {md(i['id'])} | {md(happened(i))} | {md(i['severity'] or 'not set')} |")
         w("")
     w("The written parts, as written:")
     w("")
